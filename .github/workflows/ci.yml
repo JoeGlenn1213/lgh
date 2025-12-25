@@ -67,6 +67,7 @@ jobs:
         with:
           go-version: '1.23'
       - name: Build
+        shell: bash
         run: |
           if [ "${{ runner.os }}" = "Windows" ]; then
             go build -v -o lgh.exe ./cmd/lgh
