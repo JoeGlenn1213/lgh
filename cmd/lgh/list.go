@@ -46,7 +46,7 @@ Examples:
 	RunE:    runList,
 }
 
-func runList(_ *cobra.Command, args []string) error {
+func runList(_ *cobra.Command, _ []string) error {
 	// Ensure initialized
 	if err := ensureInitialized(); err != nil {
 		return err

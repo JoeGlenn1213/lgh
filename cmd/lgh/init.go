@@ -45,7 +45,7 @@ This command creates:
 	RunE: runInit,
 }
 
-func runInit(_ *cobra.Command, args []string) error {
+func runInit(_ *cobra.Command, _ []string) error {
 	ui.Title("Initializing LGH Environment")
 
 	lghDir := config.GetLGHDir()

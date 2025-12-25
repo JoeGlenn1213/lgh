@@ -47,7 +47,7 @@ Shows:
 	RunE: runStatus,
 }
 
-func runStatus(_ *cobra.Command, args []string) error {
+func runStatus(_ *cobra.Command, _ []string) error {
 	// Ensure initialized
 	if err := ensureInitialized(); err != nil {
 		return err

@@ -60,7 +60,7 @@ func init() {
 	serveCmd.Flags().StringVarP(&bindAddress, "bind", "b", "", "Address to bind to (default: 127.0.0.1)")
 }
 
-func runServe(_ *cobra.Command, args []string) error {
+func runServe(_ *cobra.Command, _ []string) error {
 	// Ensure initialized
 	if err := ensureInitialized(); err != nil {
 		return err

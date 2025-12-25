@@ -270,7 +270,8 @@ func TestLGHRemove(t *testing.T) {
 
 	// Verify bare repo was deleted
 	bareRepoPath := filepath.Join(tmpHome, ".localgithub", "repos", "test-repo.git")
-	if _, err := os.Stat(bareRepoPath); !os.IsNotExist(err) {
+	// nolint:gosec // G304: Stat checks a derived path
+	if _, statErr := os.Stat(bareRepoPath); !os.IsNotExist(statErr) {
 		t.Error("Bare repository was not deleted")
 	}
 
@@ -311,34 +312,35 @@ func TestLGHServeAndClone(t *testing.T) {
 	gitInit.CombinedOutput()
 
 	readmeFile := filepath.Join(testRepo, "README.md")
-	os.WriteFile(readmeFile, []byte("# Test Repo\nHello World!\n"), 0644)
+	// nolint:gosec // G306: Permissions are set to 0600 for a test file.
+	_ = os.WriteFile(readmeFile, []byte("# Test Repo\nHello World!\n"), 0600)
 
 	gitAdd := exec.Command("git", "add", ".")
 	gitAdd.Dir = testRepo
-	gitAdd.CombinedOutput()
-
+	_ = gitAdd.Run()
 	gitCommit := exec.Command("git", "-c", "user.email=test@test.com", "-c", "user.name=Test", "commit", "-m", "Initial commit")
 	gitCommit.Dir = testRepo
-	gitCommit.CombinedOutput()
+	_ = gitCommit.Run()
 
 	// Init LGH
 	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	initCmd := exec.Command(lghBinary, "init")
 	initCmd.Env = append(os.Environ(), "HOME="+tmpHome)
-	initCmd.CombinedOutput()
+	_ = initCmd.Run()
 
 	// Add the test repo
 	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	addCmd := exec.Command(lghBinary, "add", testRepo, "--name", "test-repo", "--no-remote")
 	addCmd.Env = append(os.Environ(), "HOME="+tmpHome)
-	addCmd.CombinedOutput()
+	_ = addCmd.Run()
 
-	// Push to bare repo manually (simulating what a user would do)
+	// Push changes
 	bareRepoPath := filepath.Join(tmpHome, ".localgithub", "repos", "test-repo.git")
+	// nolint:gosec // G204: Subprocess launched with variable. bareRepoPath is a trusted path.
 	pushCmd := exec.Command("git", "push", bareRepoPath, "HEAD:main")
 	pushCmd.Dir = testRepo
-	if output, err := pushCmd.CombinedOutput(); err != nil {
-		t.Logf("Push to bare repo: %s", output)
+	if output, pErr := pushCmd.CombinedOutput(); pErr != nil {
+		t.Fatalf("git push failed: %v\nOutput: %s", pErr, output)
 	}
 
 	// Start the server in background
@@ -349,8 +351,8 @@ func TestLGHServeAndClone(t *testing.T) {
 	serveCmd.Stdout = &serveOutput
 	serveCmd.Stderr = &serveOutput
 
-	if err := serveCmd.Start(); err != nil {
-		t.Fatalf("Failed to start server: %v", err)
+	if startErr := serveCmd.Start(); startErr != nil {
+		t.Fatalf("Failed to start server: %v", startErr)
 	}
 	defer serveCmd.Process.Kill()
 

@@ -133,7 +133,7 @@ func validatePassword(password string) error {
 	return nil
 }
 
-func runAuthSetup(_ *cobra.Command, args []string) error {
+func runAuthSetup(_ *cobra.Command, _ []string) error {
 	if err := ensureInitialized(); err != nil {
 		return err
 	}
@@ -207,7 +207,7 @@ func runAuthSetup(_ *cobra.Command, args []string) error {
 	return nil
 }
 
-func runAuthHash(_ *cobra.Command, args []string) error {
+func runAuthHash(_ *cobra.Command, _ []string) error {
 	// Get password (hidden input)
 	password, err := readPassword("Enter password to hash: ")
 	if err != nil {
@@ -239,7 +239,7 @@ func runAuthHash(_ *cobra.Command, args []string) error {
 	return nil
 }
 
-func runAuthDisable(_ *cobra.Command, args []string) error {
+func runAuthDisable(_ *cobra.Command, _ []string) error {
 	if err := ensureInitialized(); err != nil {
 		return err
 	}
@@ -261,7 +261,7 @@ func runAuthDisable(_ *cobra.Command, args []string) error {
 	return nil
 }
 
-func runAuthStatus(_ *cobra.Command, args []string) error {
+func runAuthStatus(_ *cobra.Command, _ []string) error {
 	if err := ensureInitialized(); err != nil {
 		return err
 	}
