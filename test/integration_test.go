@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+// Package test provides integration tests for LGH
 package test
 
 import (
@@ -52,6 +53,7 @@ func TestLGHInit(t *testing.T) {
 	defer os.RemoveAll(tmpHome)
 
 	// Run lgh init
+	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	cmd := exec.Command(lghBinary, "init")
 	cmd.Env = append(os.Environ(), "HOME="+tmpHome)
 	output, err := cmd.CombinedOutput()
@@ -92,6 +94,7 @@ func TestLGHStatus(t *testing.T) {
 	defer os.RemoveAll(tmpHome)
 
 	// First init
+	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	initCmd := exec.Command(lghBinary, "init")
 	initCmd.Env = append(os.Environ(), "HOME="+tmpHome)
 	if output, err := initCmd.CombinedOutput(); err != nil {
@@ -99,6 +102,7 @@ func TestLGHStatus(t *testing.T) {
 	}
 
 	// Run lgh status
+	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	cmd := exec.Command(lghBinary, "status")
 	cmd.Env = append(os.Environ(), "HOME="+tmpHome)
 	output, err := cmd.CombinedOutput()
@@ -124,6 +128,7 @@ func TestLGHList(t *testing.T) {
 	defer os.RemoveAll(tmpHome)
 
 	// First init
+	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	initCmd := exec.Command(lghBinary, "init")
 	initCmd.Env = append(os.Environ(), "HOME="+tmpHome)
 	if output, err := initCmd.CombinedOutput(); err != nil {
@@ -131,6 +136,7 @@ func TestLGHList(t *testing.T) {
 	}
 
 	// Run lgh list (should show empty)
+	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	cmd := exec.Command(lghBinary, "list")
 	cmd.Env = append(os.Environ(), "HOME="+tmpHome)
 	output, err := cmd.CombinedOutput()
@@ -183,6 +189,7 @@ func TestLGHAddAndList(t *testing.T) {
 	gitCommit.CombinedOutput()
 
 	// First init LGH
+	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	initCmd := exec.Command(lghBinary, "init")
 	initCmd.Env = append(os.Environ(), "HOME="+tmpHome)
 	if output, err := initCmd.CombinedOutput(); err != nil {
@@ -190,6 +197,7 @@ func TestLGHAddAndList(t *testing.T) {
 	}
 
 	// Add the test repo
+	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	addCmd := exec.Command(lghBinary, "add", testRepo, "--name", "test-repo", "--no-remote")
 	addCmd.Env = append(os.Environ(), "HOME="+tmpHome)
 	if output, err := addCmd.CombinedOutput(); err != nil {
@@ -203,6 +211,7 @@ func TestLGHAddAndList(t *testing.T) {
 	}
 
 	// Run lgh list
+	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	listCmd := exec.Command(lghBinary, "list")
 	listCmd.Env = append(os.Environ(), "HOME="+tmpHome)
 	output, err := listCmd.CombinedOutput()
@@ -238,16 +247,19 @@ func TestLGHRemove(t *testing.T) {
 	gitInit.CombinedOutput()
 
 	// First init LGH
+	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	initCmd := exec.Command(lghBinary, "init")
 	initCmd.Env = append(os.Environ(), "HOME="+tmpHome)
 	initCmd.CombinedOutput()
 
 	// Add the test repo
+	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	addCmd := exec.Command(lghBinary, "add", testRepo, "--name", "test-repo", "--no-remote")
 	addCmd.Env = append(os.Environ(), "HOME="+tmpHome)
 	addCmd.CombinedOutput()
 
 	// Remove the repo
+	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	removeCmd := exec.Command(lghBinary, "remove", "test-repo", "--force")
 	removeCmd.Env = append(os.Environ(), "HOME="+tmpHome)
 	output, err := removeCmd.CombinedOutput()
@@ -262,6 +274,7 @@ func TestLGHRemove(t *testing.T) {
 	}
 
 	// Verify not in list
+	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	listCmd := exec.Command(lghBinary, "list")
 	listCmd.Env = append(os.Environ(), "HOME="+tmpHome)
 	output, _ = listCmd.CombinedOutput()
@@ -308,11 +321,13 @@ func TestLGHServeAndClone(t *testing.T) {
 	gitCommit.CombinedOutput()
 
 	// Init LGH
+	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	initCmd := exec.Command(lghBinary, "init")
 	initCmd.Env = append(os.Environ(), "HOME="+tmpHome)
 	initCmd.CombinedOutput()
 
 	// Add the test repo
+	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	addCmd := exec.Command(lghBinary, "add", testRepo, "--name", "test-repo", "--no-remote")
 	addCmd.Env = append(os.Environ(), "HOME="+tmpHome)
 	addCmd.CombinedOutput()
@@ -326,6 +341,7 @@ func TestLGHServeAndClone(t *testing.T) {
 	}
 
 	// Start the server in background
+	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	serveCmd := exec.Command(lghBinary, "serve", "--port", "19418")
 	serveCmd.Env = append(os.Environ(), "HOME="+tmpHome)
 	var serveOutput bytes.Buffer
@@ -365,6 +381,7 @@ func TestLGHServeAndClone(t *testing.T) {
 }
 
 func TestLGHVersion(t *testing.T) {
+	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	cmd := exec.Command(lghBinary, "--version")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -379,6 +396,7 @@ func TestLGHVersion(t *testing.T) {
 }
 
 func TestLGHHelp(t *testing.T) {
+	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	cmd := exec.Command(lghBinary, "--help")
 	output, err := cmd.CombinedOutput()
 	if err != nil {

@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+// Package tunnel provides remote access via ngrok and cloudflared
 package tunnel
 
 import (
@@ -129,6 +130,7 @@ func StartNgrok(port int) (*exec.Cmd, error) {
 		return nil, fmt.Errorf("ngrok is not installed")
 	}
 
+	// nolint:gosec // G204: Subprocess launched with variable. port is a trusted integer.
 	cmd := exec.Command("ngrok", "http", fmt.Sprintf("%d", port))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -146,6 +148,7 @@ func StartCloudflared(port int) (*exec.Cmd, error) {
 		return nil, fmt.Errorf("cloudflared is not installed")
 	}
 
+	// nolint:gosec // G204: Subprocess launched with variable. port is a trusted integer.
 	cmd := exec.Command("cloudflared", "tunnel", "--url", fmt.Sprintf("http://localhost:%d", port))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

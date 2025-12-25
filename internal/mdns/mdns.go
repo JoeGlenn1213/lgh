@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+// Package mdns provides mDNS service discovery for LGH
 package mdns
 
 import (
@@ -119,8 +120,8 @@ type DiscoveryResult struct {
 	URL  string
 }
 
-// Discover finds LGH services on the local network
-func Discover(timeout int) ([]DiscoveryResult, error) {
+// Discover performs mDNS discovery for LGH services
+func Discover(_ int) ([]DiscoveryResult, error) {
 	results := []DiscoveryResult{}
 
 	entryCh := make(chan *mdns.ServiceEntry, 10)

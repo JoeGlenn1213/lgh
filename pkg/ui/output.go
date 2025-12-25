@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+// Package ui provides terminal UI components and colorized output for LGH
 package ui
 
 import (
@@ -30,14 +31,20 @@ import (
 )
 
 var (
-	// Color functions
-	Green  = color.New(color.FgGreen).SprintFunc()
-	Red    = color.New(color.FgRed).SprintFunc()
+	// Green prints text in green
+	Green = color.New(color.FgGreen).SprintFunc()
+	// Red prints text in red
+	Red = color.New(color.FgRed).SprintFunc()
+	// Yellow prints text in yellow
 	Yellow = color.New(color.FgYellow).SprintFunc()
-	Blue   = color.New(color.FgBlue).SprintFunc()
-	Cyan   = color.New(color.FgCyan).SprintFunc()
-	Gray   = color.New(color.FgHiBlack).SprintFunc()
-	Bold   = color.New(color.Bold).SprintFunc()
+	// Blue prints text in blue
+	Blue = color.New(color.FgBlue).SprintFunc()
+	// Cyan prints text in cyan
+	Cyan = color.New(color.FgCyan).SprintFunc()
+	// Gray prints text in high-intensity black (gray)
+	Gray = color.New(color.FgHiBlack).SprintFunc()
+	// Bold prints text in bold
+	Bold = color.New(color.Bold).SprintFunc()
 
 	// Styled text
 	greenBold  = color.New(color.FgGreen, color.Bold).SprintFunc()
