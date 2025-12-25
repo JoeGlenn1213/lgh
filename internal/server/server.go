@@ -101,7 +101,7 @@ func (s *Server) Start() error {
 	if err != nil {
 		return fmt.Errorf("port %d is already in use: %w", s.cfg.Port, err)
 	}
-	ln.Close()
+	_ = ln.Close()
 
 	// Save PID file
 	if err := s.savePID(); err != nil {
@@ -132,7 +132,7 @@ func (s *Server) Stop() error {
 	defer cancel()
 
 	// Remove PID file
-	os.Remove(config.GetPIDPath())
+	_ = os.Remove(config.GetPIDPath())
 
 	return s.httpServer.Shutdown(ctx)
 }
@@ -234,12 +234,14 @@ func IsRunning() (bool, int) {
 
 	pid, err := strconv.Atoi(strings.TrimSpace(string(data)))
 	if err != nil {
-		os.Remove(pidPath)
+		_ = os.Remove(pidPath)
 		return false, 0
 	}
 
-	if !checkProcessRunning(pid) {
-		os.Remove(pidPath)
+	// SECURITY: Verify the process is actually an LGH server (handles PID reuse)
+	// Check if the process command contains "lgh"
+	if !isLGHProcess(pid) {
+		_ = os.Remove(pidPath)
 		return false, 0
 	}
 

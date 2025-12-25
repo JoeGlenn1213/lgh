@@ -158,7 +158,7 @@ func runAdd(_ *cobra.Command, args []string) error {
 	ui.Info("Registering repository...")
 	if err := reg.Add(name, absPath, barePath); err != nil {
 		// Cleanup: remove bare repo if registration fails
-		os.RemoveAll(barePath)
+		_ = os.RemoveAll(barePath)
 		return fmt.Errorf("failed to register repository: %w", err)
 	}
 	ui.Success("Registered in mappings.yaml")

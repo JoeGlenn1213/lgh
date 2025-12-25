@@ -97,7 +97,7 @@ func runStatus(_ *cobra.Command, args []string) error {
 		if err != nil {
 			ui.Error("  Connection failed: %v", err)
 		} else {
-			conn.Close()
+			_ = conn.Close()
 			ui.Success("  %s - OK", healthURL)
 		}
 		fmt.Println()

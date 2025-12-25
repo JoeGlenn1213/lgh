@@ -133,7 +133,7 @@ func runRemove(_ *cobra.Command, args []string) error {
 
 		fmt.Print("Are you sure? [y/N]: ")
 		var confirm string
-		fmt.Scanln(&confirm)
+		_, _ = fmt.Scanln(&confirm)
 		if confirm != "y" && confirm != "Y" {
 			ui.Info("Canceled.")
 			return nil

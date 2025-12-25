@@ -292,6 +292,7 @@ func updateAuthConfig(cfg *config.Config) error {
 	configPath := config.GetConfigPath()
 
 	// Read existing config
+	// nolint:gosec // G304: Potential file inclusion via variable. configPath is a trusted path.
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return err
