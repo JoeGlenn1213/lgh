@@ -25,6 +25,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -35,7 +36,11 @@ var lghBinary string
 func init() {
 	// Get the path to the lgh binary
 	wd, _ := os.Getwd()
-	lghBinary = filepath.Join(filepath.Dir(wd), "lgh")
+	binaryName := "lgh"
+	if runtime.GOOS == "windows" {
+		binaryName = "lgh.exe"
+	}
+	lghBinary = filepath.Join(filepath.Dir(wd), binaryName)
 }
 
 func TestLGHInit(t *testing.T) {
