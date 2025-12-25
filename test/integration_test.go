@@ -338,8 +338,10 @@ func TestLGHServeAndClone(t *testing.T) {
 
 	// Push changes
 	bareRepoPath := filepath.Join(tmpHome, ".localgithub", "repos", "test-repo.git")
+	// Convert to forward slashes for Git on Windows
+	gitPath := filepath.ToSlash(bareRepoPath)
 	// nolint:gosec // G204: Subprocess launched with variable. bareRepoPath is a trusted path.
-	pushCmd := exec.Command("git", "push", bareRepoPath, "HEAD:main")
+	pushCmd := exec.Command("git", "push", gitPath, "HEAD:main")
 	pushCmd.Dir = testRepo
 	if output, pErr := pushCmd.CombinedOutput(); pErr != nil {
 		t.Fatalf("git push failed: %v\nOutput: %s", pErr, output)
