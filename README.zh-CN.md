@@ -105,7 +105,17 @@ lgh init
 ### 2. 启动服务器
 
 ```bash
+# 前台启动
 lgh serve
+
+# 后台启动（守护进程模式）
+lgh serve -d
+
+# 查看服务器状态
+lgh status
+
+# 停止服务器
+lgh stop
 ```
 
 服务器默认监听 `http://127.0.0.1:9418`
@@ -141,17 +151,22 @@ git clone http://127.0.0.1:9418/your-project.git
 | 命令 | 说明 | 示例 |
 |------|------|------|
 | `lgh init` | 初始化 LGH 环境 | `lgh init` |
-| `lgh serve` | 启动 HTTP 服务器 | `lgh serve --port 8080` |
+| `lgh serve` | 启动 HTTP 服务器 | `lgh serve -d` |
+| `lgh stop` | 停止服务器 | `lgh stop` |
 | `lgh add` | 添加仓库到 LGH | `lgh add . --name my-repo` |
 | `lgh list` | 列出所有仓库 | `lgh list` |
 | `lgh status` | 查看服务状态 | `lgh status` |
 | `lgh remove` | 移除仓库 | `lgh remove my-repo` |
 | `lgh tunnel` | 暴露到外网 | `lgh tunnel --method ngrok` |
 | `lgh auth` | 管理认证设置 | `lgh auth setup` |
+| `lgh -v` | 显示版本 | `lgh -v` |
 
 ### 服务器选项
 
 ```bash
+# 后台模式（守护进程）
+lgh serve -d
+
 # 只读模式（禁止 push）
 lgh serve --read-only
 

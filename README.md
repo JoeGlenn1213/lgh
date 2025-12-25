@@ -105,7 +105,17 @@ This creates the necessary directories and config files in `~/.localgithub/`.
 ### 2. Start the Server
 
 ```bash
+# Start in foreground
 lgh serve
+
+# Start in background (daemon mode)
+lgh serve -d
+
+# Check server status
+lgh status
+
+# Stop the server
+lgh stop
 ```
 
 Server listens on `http://127.0.0.1:9418` by default.
@@ -141,17 +151,22 @@ git clone http://127.0.0.1:9418/your-project.git
 | Command | Description | Example |
 |------|------|------|
 | `lgh init` | Initialize LGH environment | `lgh init` |
-| `lgh serve` | Start HTTP server | `lgh serve --port 8080` |
+| `lgh serve` | Start HTTP server | `lgh serve -d` |
+| `lgh stop` | Stop running server | `lgh stop` |
 | `lgh add` | Add repository to LGH | `lgh add . --name my-repo` |
 | `lgh list` | List all repositories | `lgh list` |
 | `lgh status` | View server status | `lgh status` |
 | `lgh remove` | Remove repository | `lgh remove my-repo` |
 | `lgh tunnel` | Expose to internet | `lgh tunnel --method ngrok` |
 | `lgh auth` | Manage authentication | `lgh auth setup` |
+| `lgh -v` | Show version | `lgh -v` |
 
 ### Server Options
 
 ```bash
+# Daemon mode (background)
+lgh serve -d
+
 # Read-only mode (disable push)
 lgh serve --read-only
 
