@@ -71,6 +71,7 @@ Git Commit: %s
 	// Add subcommands
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(serveCmd)
+	rootCmd.AddCommand(stopCmd)
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(statusCmd)

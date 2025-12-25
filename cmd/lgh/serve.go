@@ -21,6 +21,10 @@
 package main
 
 import (
+	"fmt"
+	"os"
+	"os/exec"
+
 	"github.com/spf13/cobra"
 
 	"github.com/JoeGlenn1213/lgh/internal/config"
@@ -34,6 +38,7 @@ var (
 	enableMDNS   bool
 	serverPort   int
 	bindAddress  string
+	daemonFlag   bool
 )
 
 var serveCmd = &cobra.Command{
@@ -44,9 +49,11 @@ var serveCmd = &cobra.Command{
 The server listens on localhost by default (127.0.0.1:9418).
 Use --read-only to prevent push operations.
 Use --mdns to enable mDNS for local network discovery.
+Use --daemon to run in background mode.
 
 Examples:
   lgh serve                    # Start with defaults
+  lgh serve --daemon           # Start in background
   lgh serve --read-only        # Start in read-only mode
   lgh serve --port 8080        # Use custom port
   lgh serve --mdns             # Enable mDNS discovery`,
@@ -58,6 +65,7 @@ func init() {
 	serveCmd.Flags().BoolVarP(&enableMDNS, "mdns", "m", false, "Enable mDNS for LAN discovery")
 	serveCmd.Flags().IntVarP(&serverPort, "port", "p", 0, "Port to listen on (default: 9418)")
 	serveCmd.Flags().StringVarP(&bindAddress, "bind", "b", "", "Address to bind to (default: 127.0.0.1)")
+	serveCmd.Flags().BoolVarP(&daemonFlag, "daemon", "d", false, "Run server in background (daemon mode)")
 }
 
 func runServe(_ *cobra.Command, _ []string) error {
@@ -103,6 +111,11 @@ func runServe(_ *cobra.Command, _ []string) error {
 		return nil
 	}
 
+	// Daemon mode: start server in background
+	if daemonFlag {
+		return startDaemon(cfg)
+	}
+
 	// Start mDNS if enabled
 	if cfg.MDNSEnabled {
 		mdnsService, err := mdns.NewService(cfg.Port)
@@ -120,4 +133,48 @@ func runServe(_ *cobra.Command, _ []string) error {
 	// Create and start server using cfg.ReadOnly (respects config.yaml)
 	srv := server.New(cfg)
 	return srv.Start()
+}
+
+func startDaemon(cfg *config.Config) error {
+	// Build command arguments
+	args := []string{"serve"}
+	if cfg.Port != 9418 {
+		args = append(args, "--port", fmt.Sprintf("%d", cfg.Port))
+	}
+	if cfg.BindAddress != "127.0.0.1" && cfg.BindAddress != "" {
+		args = append(args, "--bind", cfg.BindAddress)
+	}
+	if cfg.ReadOnly {
+		args = append(args, "--read-only")
+	}
+	if cfg.MDNSEnabled {
+		args = append(args, "--mdns")
+	}
+
+	// Get executable path
+	executable, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("failed to get executable path: %w", err)
+	}
+
+	// Start process in background
+	// #nosec G204 -- executable is our own binary path, args are trusted
+	cmd := exec.Command(executable, args...)
+	cmd.Stdout = nil
+	cmd.Stderr = nil
+	cmd.Stdin = nil
+
+	// Detach from parent process
+	cmd.SysProcAttr = server.GetDaemonSysProcAttr()
+
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to start daemon: %w", err)
+	}
+
+	ui.Success("LGH server started in background (PID: %d)", cmd.Process.Pid)
+	ui.Info("Address: http://%s:%d", cfg.BindAddress, cfg.Port)
+	ui.Info("Use 'lgh stop' to stop the server")
+	ui.Info("Use 'lgh status' to check server status")
+
+	return nil
 }

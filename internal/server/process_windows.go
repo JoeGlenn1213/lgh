@@ -28,6 +28,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"syscall"
 )
 
 // checkProcessRunning checks if the process with the given PID is running and is likely an LGH server
@@ -50,4 +51,19 @@ func checkProcessRunning(pid int) bool {
 	// Double check if the output contains "lgh" to handle PID reuse
 	// Windows filenames are case-insensitive
 	return strings.Contains(strings.ToLower(output), "lgh")
+}
+
+// GetDaemonSysProcAttr returns system-specific process attributes for daemon mode
+func GetDaemonSysProcAttr() *syscall.SysProcAttr {
+	return &syscall.SysProcAttr{
+		CreationFlags: syscall.CREATE_NEW_PROCESS_GROUP, // Detach from console
+	}
+}
+
+// StopServer stops the running LGH server with the given PID
+func StopServer(pid int) error {
+	// On Windows, use taskkill to terminate the process
+	// nolint:gosec // G204: pid is a trusted integer from our PID file
+	cmd := exec.Command("taskkill", "/F", "/PID", strconv.Itoa(pid))
+	return cmd.Run()
 }

@@ -62,3 +62,26 @@ func isLGHProcess(pid int) bool {
 	procName := strings.TrimSpace(out.String())
 	return strings.Contains(procName, "lgh")
 }
+
+// GetDaemonSysProcAttr returns system-specific process attributes for daemon mode
+func GetDaemonSysProcAttr() *syscall.SysProcAttr {
+	return &syscall.SysProcAttr{
+		Setsid: true, // Create new session to detach from terminal
+	}
+}
+
+// StopServer stops the running LGH server with the given PID
+func StopServer(pid int) error {
+	process, err := os.FindProcess(pid)
+	if err != nil {
+		return err
+	}
+
+	// Send SIGTERM for graceful shutdown
+	if err := process.Signal(syscall.SIGTERM); err != nil {
+		// If SIGTERM fails, try SIGKILL
+		return process.Signal(syscall.SIGKILL)
+	}
+
+	return nil
+}
