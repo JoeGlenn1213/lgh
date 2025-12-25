@@ -238,9 +238,7 @@ func IsRunning() (bool, int) {
 		return false, 0
 	}
 
-	// SECURITY: Verify the process is actually an LGH server (handles PID reuse)
-	// Check if the process command contains "lgh"
-	if !isLGHProcess(pid) {
+	if !checkProcessRunning(pid) {
 		_ = os.Remove(pidPath)
 		return false, 0
 	}
