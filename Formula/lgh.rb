@@ -26,36 +26,34 @@ class Lgh < Formula
   desc "Lightweight local Git hosting service with authentication - LocalGitHub"
   homepage "https://github.com/JoeGlenn1213/lgh"
   license "MIT"
-  version "1.0.0"
+  version "1.0.1"
 
-  # For source builds
-  url "https://github.com/JoeGlenn1213/lgh/archive/refs/tags/v1.0.0.tar.gz"
-  # sha256 "REPLACE_WITH_ACTUAL_SHA256"
+  # Use prebuilt binaries for faster installation
+  on_macos do
+    if Hardware::CPU.arm?
+      url "https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.1/lgh-1.0.1-darwin-arm64"
+      sha256 "316bb2a2a66f3b6f8febb006d41df0aa0c6772330d617e72e2fd5e065fb023ce"
+    else
+      url "https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.1/lgh-1.0.1-darwin-amd64"
+      sha256 "d2b723e8f5c98754e56693b4f1a6eb475eca02eb42f0bf9e9cffb9546c16c37b"
+    end
+  end
 
-  # Binary releases (uncomment and update when releases are available)
-  # on_macos do
-  #   if Hardware::CPU.arm?
-  #     url "https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.0/lgh-darwin-arm64"
-  #     sha256 "REPLACE_WITH_ACTUAL_SHA256"
-  #   else
-  #     url "https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.0/lgh-darwin-amd64"
-  #     sha256 "REPLACE_WITH_ACTUAL_SHA256"
-  #   end
-  # end
+  on_linux do
+    if Hardware::CPU.arm?
+      url "https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.1/lgh-1.0.1-linux-arm64"
+      sha256 "319823644bd94638190a287a9377e0fa89d1dec0075283cc2d5bf3bc256f0583"
+    else
+      url "https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.1/lgh-1.0.1-linux-amd64"
+      sha256 "71b3fd56ece78d8c46281f9b412decc119778e750e555f2acde46a7436429943"
+    end
+  end
 
-  depends_on "go" => :build
   depends_on "git"
 
   def install
-    # Build with version info
-    ldflags = %W[
-      -s -w
-      -X main.Version=#{version}
-      -X main.BuildDate=#{Date.today}
-      -X main.GitCommit=#{Utils.git_head}
-    ]
-
-    system "go", "build", *std_go_args(ldflags: ldflags), "./cmd/lgh"
+    # For prebuilt binaries, just install directly
+    bin.install "lgh-#{version}-#{OS.kernel_name.downcase}-#{Hardware::CPU.arch}" => "lgh"
   end
 
   def post_install
