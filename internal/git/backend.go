@@ -38,9 +38,10 @@ import (
 
 // Backend handles Git HTTP backend requests
 type Backend struct {
-	reposDir string
-	readOnly bool
-	gitPath  string
+	reposDir        string
+	readOnly        bool
+	gitPath         string
+	httpBackendPath string
 }
 
 // NewBackend creates a new Git HTTP backend handler
@@ -68,9 +69,10 @@ func NewBackend(reposDir string, readOnly bool) (*Backend, error) {
 	}
 
 	return &Backend{
-		reposDir: reposDir,
-		readOnly: readOnly,
-		gitPath:  gitPath,
+		reposDir:        reposDir,
+		readOnly:        readOnly,
+		gitPath:         gitPath,
+		httpBackendPath: httpBackendPath,
 	}, nil
 }
 
@@ -109,18 +111,9 @@ func (b *Backend) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get git-http-backend path
-	execPath, err := getGitExecPath()
-	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	httpBackendPath := filepath.Join(execPath, "git-http-backend")
-
-	// Setup CGI handler
+	// Setup CGI handler using pre-validated httpBackendPath
 	handler := &cgi.Handler{
-		Path: httpBackendPath,
+		Path: b.httpBackendPath,
 		Env: []string{
 			"GIT_PROJECT_ROOT=" + b.reposDir,
 			"GIT_HTTP_EXPORT_ALL=1",
