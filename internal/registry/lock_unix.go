@@ -47,6 +47,7 @@ func (fl *FileLock) Lock() error {
 		return err
 	}
 	fl.file = f
+	// nolint:gosec // G115: integer overflow conversion uintptr -> int. File descriptor is safe to cast.
 	return syscall.Flock(int(f.Fd()), syscall.LOCK_EX)
 }
 
