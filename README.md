@@ -30,11 +30,11 @@ Download the pre-built binary for your system:
 
 | OS | Architecture | Download |
 |------|------|------|
-| macOS | Apple Silicon (M1/M2/M3) | [lgh-darwin-arm64](dist/lgh-darwin-arm64) |
-| macOS | Intel | [lgh-darwin-amd64](dist/lgh-darwin-amd64) |
-| Linux | x86_64 | [lgh-linux-amd64](dist/lgh-linux-amd64) |
-| Linux | ARM64 | [lgh-linux-arm64](dist/lgh-linux-arm64) |
-| Windows | x86_64 | [lgh-windows-amd64.exe](dist/lgh-windows-amd64.exe) |
+| macOS | Apple Silicon (M1/M2/M3) | [lgh-darwin-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.1/lgh-darwin-arm64) |
+| macOS | Intel | [lgh-darwin-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.1/lgh-darwin-amd64) |
+| Linux | x86_64 | [lgh-linux-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.1/lgh-linux-amd64) |
+| Linux | ARM64 | [lgh-linux-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.1/lgh-linux-arm64) |
+| Windows | x86_64 | [lgh-windows-amd64.exe](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.1/lgh-windows-amd64.exe) |
 
 ```bash
 # Install after download (macOS ARM64 example)
