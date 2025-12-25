@@ -75,4 +75,10 @@ jobs:
             go build -v -o lgh ./cmd/lgh
           fi
       - name: Test
-        run: go test ./... -v -race
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            go test ./... -v -race
+          else
+            go test ./... -v
+          fi
