@@ -57,8 +57,14 @@ func NewBackend(reposDir string, readOnly bool) (*Backend, error) {
 	}
 
 	httpBackendPath := filepath.Join(gitExecPath, "git-http-backend")
+	// On Windows, try with .exe extension if the base name doesn't exist
 	if _, err := os.Stat(httpBackendPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("git-http-backend not found at %s", httpBackendPath)
+		httpBackendPathExe := httpBackendPath + ".exe"
+		if _, errExe := os.Stat(httpBackendPathExe); errExe == nil {
+			httpBackendPath = httpBackendPathExe
+		} else {
+			return nil, fmt.Errorf("git-http-backend not found at %s or %s", httpBackendPath, httpBackendPathExe)
+		}
 	}
 
 	return &Backend{
