@@ -21,6 +21,7 @@
 //go:build darwin || linux
 // +build darwin linux
 
+// Package registry provide platform-specific file locking and project registration
 package registry
 
 import (
@@ -41,7 +42,7 @@ func NewFileLock(path string) *FileLock {
 
 // Lock acquires an exclusive lock
 func (fl *FileLock) Lock() error {
-	f, err := os.OpenFile(fl.path, os.O_CREATE|os.O_RDWR, 0644)
+	f, err := os.OpenFile(fl.path, os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {
 		return err
 	}
@@ -54,6 +55,6 @@ func (fl *FileLock) Unlock() error {
 	if fl.file == nil {
 		return nil
 	}
-	syscall.Flock(int(fl.file.Fd()), syscall.LOCK_UN)
+	_ = syscall.Flock(int(fl.file.Fd()), syscall.LOCK_UN)
 	return fl.file.Close()
 }

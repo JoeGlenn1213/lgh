@@ -112,11 +112,11 @@ func (r *Registry) save(mappings *Mappings) error {
 
 	// Ensure directory exists
 	dir := filepath.Dir(r.path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0700); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
 
-	if err := os.WriteFile(r.path, data, 0644); err != nil {
+	if err := os.WriteFile(r.path, data, 0600); err != nil {
 		return fmt.Errorf("failed to write mappings file: %w", err)
 	}
 
