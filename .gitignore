@@ -1,0 +1,17 @@
+# Binaries
+dist/
+bin/
+lgh
+lgh.exe
+
+# OS Specific
+.DS_Store
+Thumbs.db
+
+# Go
+go.sum
+vendor/
+.idea/
+.vscode/
+*.prof
+*.test

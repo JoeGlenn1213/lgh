@@ -1,0 +1,41 @@
+run:
+  timeout: 5m
+  tests: true
+
+linters-settings:
+  govet:
+    check-shadowing: true
+  gocyclo:
+    min-complexity: 15
+  maligned:
+    suggest-new: true
+  dupl:
+    threshold: 100
+  goconst:
+    min-len: 2
+    min-occurrences: 2
+  misspell:
+    locale: US
+  lll:
+    line-length: 140
+  goimports:
+    local-prefixes: github.com/JoeGlenn1213/lgh
+
+linters:
+  enable:
+    - govet
+    - ineffassign
+    - staticcheck
+    - gosimple
+    - unused
+    - misspell
+    - goimports
+    - revive
+    - typecheck
+    - gofmt
+    - gosec
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
