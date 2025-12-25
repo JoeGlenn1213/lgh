@@ -345,6 +345,12 @@ func TestLGHServeAndClone(t *testing.T) {
 		t.Fatalf("git push failed: %v\nOutput: %s", pErr, output)
 	}
 
+	// Set default branch in bare repo to main (so git clone knows what to checkout)
+	// nolint:gosec // G204: Subprocess launched with variable. bareRepoPath is a trusted path.
+	setHeadCmd := exec.Command("git", "symbolic-ref", "HEAD", "refs/heads/main")
+	setHeadCmd.Dir = bareRepoPath
+	_ = setHeadCmd.Run()
+
 	// Start the server in background
 	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	serveCmd := exec.Command(lghBinary, "serve", "--port", "19418")
