@@ -382,7 +382,7 @@ func TestLGHServeAndClone(t *testing.T) {
 	if _, statErr := os.Stat(clonedReadme); os.IsNotExist(statErr) {
 		// Debug output: list all files in the clone directory to see what was actually cloned
 		var files []string
-		_ = filepath.Walk(cloneDir, func(path string, info os.FileInfo, err error) error {
+		_ = filepath.Walk(cloneDir, func(path string, _ os.FileInfo, err error) error {
 			if err == nil {
 				files = append(files, path)
 			}
