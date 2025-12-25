@@ -97,21 +97,21 @@ func TestLGHStatus(t *testing.T) {
 	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	initCmd := exec.Command(lghBinary, "init")
 	initCmd.Env = append(os.Environ(), "HOME="+tmpHome)
-	if output, err := initCmd.CombinedOutput(); err != nil {
-		t.Fatalf("lgh init failed: %v\nOutput: %s", err, output)
+	if initOutput, initErr := initCmd.CombinedOutput(); initErr != nil {
+		t.Fatalf("lgh init failed: %v\nOutput: %s", initErr, initOutput)
 	}
 
 	// Run lgh status
 	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	statusCmd := exec.Command(lghBinary, "status")
 	statusCmd.Env = append(os.Environ(), "HOME="+tmpHome)
-	output, err := statusCmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("lgh status failed: %v\nOutput: %s", err, output)
+	statusOutput, statusErr := statusCmd.CombinedOutput()
+	if statusErr != nil {
+		t.Fatalf("lgh status failed: %v\nOutput: %s", statusErr, statusOutput)
 	}
 
 	// Check output contains expected information
-	outputStr := string(output)
+	outputStr := string(statusOutput)
 	if !strings.Contains(outputStr, "Status") {
 		t.Error("Status output missing expected information")
 	}
@@ -139,13 +139,13 @@ func TestLGHList(t *testing.T) {
 	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	listCmd := exec.Command(lghBinary, "list")
 	listCmd.Env = append(os.Environ(), "HOME="+tmpHome)
-	output, err := listCmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("lgh list failed: %v\nOutput: %s", err, output)
+	listOutput, listErr := listCmd.CombinedOutput()
+	if listErr != nil {
+		t.Fatalf("lgh list failed: %v\nOutput: %s", listErr, listOutput)
 	}
 
 	// Should contain "No repositories" message
-	if !strings.Contains(string(output), "No repositories") {
+	if !strings.Contains(string(listOutput), "No repositories") {
 		t.Error("Expected 'No repositories' message")
 	}
 
@@ -200,8 +200,9 @@ func TestLGHAddAndList(t *testing.T) {
 	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	addCmd := exec.Command(lghBinary, "add", testRepo, "--name", "test-repo", "--no-remote")
 	addCmd.Env = append(os.Environ(), "HOME="+tmpHome)
-	if output, err := addCmd.CombinedOutput(); err != nil {
-		t.Fatalf("lgh add failed: %v\nOutput: %s", err, output)
+	addOutput, addErr := addCmd.CombinedOutput()
+	if addErr != nil {
+		t.Fatalf("lgh add failed: %v\nOutput: %s", addErr, addOutput)
 	}
 
 	// Verify bare repo was created

@@ -158,8 +158,9 @@ func runAuthSetup(_ *cobra.Command, args []string) error {
 	}
 
 	// Validate password
-	if err := validatePassword(password); err != nil {
-		return err
+	vErr := validatePassword(password)
+	if vErr != nil {
+		return vErr
 	}
 
 	// Confirm password
@@ -214,8 +215,9 @@ func runAuthHash(_ *cobra.Command, args []string) error {
 	}
 
 	// Validate password
-	if err := validatePassword(password); err != nil {
-		return err
+	vErr := validatePassword(password)
+	if vErr != nil {
+		return vErr
 	}
 
 	hash, err := server.HashPassword(password)
