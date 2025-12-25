@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/JoeGlenn1213/lgh/discussions
+    about: Ask questions and discuss with the community
+  - name: 🔒 Security Issue
+    url: https://github.com/JoeGlenn1213/lgh/security/advisories/new
+    about: Report a security vulnerability (PRIVATE)
