@@ -29,7 +29,7 @@ import (
 
 var (
 	// Version information
-	Version = "1.0.0"
+	Version = "1.0.1"
 	// BuildDate is the timestamp when the binary was built
 	BuildDate = "unknown"
 	// GitCommit is the commit hash of the build
