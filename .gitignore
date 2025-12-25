@@ -1,8 +1,8 @@
 # Binaries
 dist/
 bin/
-lgh
-lgh.exe
+/lgh
+/lgh.exe
 
 # OS Specific
 .DS_Store

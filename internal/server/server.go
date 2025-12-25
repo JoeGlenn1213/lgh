@@ -60,7 +60,7 @@ func (s *Server) Start() error {
 	}
 
 	// Build handler chain
-	var handler http.Handler = gitHandler
+	var handler = gitHandler
 
 	// Add logging middleware
 	handler = s.loggingMiddleware(handler)

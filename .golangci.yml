@@ -27,10 +27,6 @@ linters-settings:
     check-shadowing: true
   gocyclo:
     min-complexity: 15
-  maligned:
-    suggest-new: true
-  dupl:
-    threshold: 100
   goconst:
     min-len: 2
     min-occurrences: 2
@@ -42,6 +38,7 @@ linters-settings:
     local-prefixes: github.com/JoeGlenn1213/lgh
 
 linters:
+  disable-all: true
   enable:
     - govet
     - ineffassign

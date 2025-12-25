@@ -177,10 +177,6 @@ func runAuthSetup(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	// Clear password from memory (best effort)
-	password = ""
-	confirm = ""
-
 	// Load and update config
 	cfg, err := config.Load()
 	if err != nil {
@@ -225,9 +221,6 @@ func runAuthHash(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
-
-	// Clear password from memory
-	password = ""
 
 	fmt.Println()
 	ui.Success("Password hash generated:")
