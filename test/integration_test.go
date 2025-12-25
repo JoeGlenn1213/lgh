@@ -170,14 +170,14 @@ func TestLGHAddAndList(t *testing.T) {
 	// Initialize git repo
 	gitInit := exec.Command("git", "init")
 	gitInit.Dir = testRepo
-	if output, err := gitInit.CombinedOutput(); err != nil {
-		t.Fatalf("git init failed: %v\nOutput: %s", err, output)
+	if gInitOut, gInitErr := gitInit.CombinedOutput(); gInitErr != nil {
+		t.Fatalf("git init failed: %v\nOutput: %s", gInitErr, gInitOut)
 	}
 
 	// Create a file and commit
 	readmeFile := filepath.Join(testRepo, "README.md")
-	if err := os.WriteFile(readmeFile, []byte("# Test Repo\n"), 0600); err != nil {
-		t.Fatalf("Failed to create README: %v", err)
+	if wErr := os.WriteFile(readmeFile, []byte("# Test Repo\n"), 0600); wErr != nil {
+		t.Fatalf("Failed to create README: %v", wErr)
 	}
 
 	gitAdd := exec.Command("git", "add", ".")
@@ -192,8 +192,8 @@ func TestLGHAddAndList(t *testing.T) {
 	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
 	initCmd := exec.Command(lghBinary, "init")
 	initCmd.Env = append(os.Environ(), "HOME="+tmpHome)
-	if output, err := initCmd.CombinedOutput(); err != nil {
-		t.Fatalf("lgh init failed: %v\nOutput: %s", err, output)
+	if initOut, initErr := initCmd.CombinedOutput(); initErr != nil {
+		t.Fatalf("lgh init failed: %v\nOutput: %s", initErr, initOut)
 	}
 
 	// Add the test repo
@@ -207,7 +207,7 @@ func TestLGHAddAndList(t *testing.T) {
 
 	// Verify bare repo was created
 	bareRepoPath := filepath.Join(tmpHome, ".localgithub", "repos", "test-repo.git")
-	if _, err := os.Stat(bareRepoPath); os.IsNotExist(err) {
+	if _, statErr := os.Stat(bareRepoPath); os.IsNotExist(statErr) {
 		t.Error("Bare repository not created")
 	}
 
@@ -309,13 +309,12 @@ func TestLGHServeAndClone(t *testing.T) {
 	// Initialize git repo with content
 	gitInit := exec.Command("git", "init")
 	gitInit.Dir = testRepo
-	gitInit.CombinedOutput()
+	if gInitOut, gInitErr := gitInit.CombinedOutput(); gInitErr != nil {
+		t.Fatalf("git init failed: %v\nOutput: %s", gInitErr, gInitOut)
+	}
 
 	readmeFile := filepath.Join(testRepo, "README.md")
 	// nolint:gosec // G306: Permissions are set to 0600 for a test file.
-	_ = os.WriteFile(readmeFile, []byte("# Test Repo\nHello World!\n"), 0600)
-
-	gitAdd := exec.Command("git", "add", ".")
 	gitAdd.Dir = testRepo
 	_ = gitAdd.Run()
 	gitCommit := exec.Command("git", "-c", "user.email=test@test.com", "-c", "user.name=Test", "commit", "-m", "Initial commit")
