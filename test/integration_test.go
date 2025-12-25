@@ -315,6 +315,9 @@ func TestLGHServeAndClone(t *testing.T) {
 
 	readmeFile := filepath.Join(testRepo, "README.md")
 	// nolint:gosec // G306: Permissions are set to 0600 for a test file.
+	_ = os.WriteFile(readmeFile, []byte("# Test Repo\nHello World!\n"), 0600)
+
+	gitAdd := exec.Command("git", "add", ".")
 	gitAdd.Dir = testRepo
 	_ = gitAdd.Run()
 	gitCommit := exec.Command("git", "-c", "user.email=test@test.com", "-c", "user.name=Test", "commit", "-m", "Initial commit")
