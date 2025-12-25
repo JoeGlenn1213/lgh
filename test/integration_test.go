@@ -363,12 +363,13 @@ func TestLGHServeAndClone(t *testing.T) {
 	}
 	defer os.RemoveAll(cloneDir)
 
+	// nolint:gosec // G204: Subprocess launched with variable. cloneDir is a trusted path.
 	cloneCmd := exec.Command("git", "clone", "http://127.0.0.1:19418/test-repo.git", cloneDir+"/cloned")
-	output, err := cloneCmd.CombinedOutput()
-	if err != nil {
-		t.Logf("Clone output: %s", output)
+	cOutput, cErr := cloneCmd.CombinedOutput()
+	if cErr != nil {
+		t.Logf("Clone output: %s", cOutput)
 		t.Logf("Server output: %s", serveOutput.String())
-		t.Fatalf("git clone failed: %v", err)
+		t.Fatalf("git clone failed: %v", cErr)
 	}
 
 	// Verify cloned content

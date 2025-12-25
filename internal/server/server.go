@@ -78,7 +78,7 @@ func (s *Server) Start() error {
 	// Health check endpoint (always public, bypasses auth)
 	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		_ = w.Write([]byte("OK"))
+		_, _ = w.Write([]byte("OK"))
 	})
 
 	// Git backend for all .git paths

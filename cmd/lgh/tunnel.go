@@ -59,7 +59,7 @@ func init() {
 	tunnelCmd.Flags().StringVarP(&tunnelMethod, "method", "m", "", "Tunnel method (ngrok, cloudflared, ssh)")
 }
 
-func runTunnel(cmd *cobra.Command, args []string) error {
+func runTunnel(_ *cobra.Command, args []string) error {
 	// Ensure initialized
 	if err := ensureInitialized(); err != nil {
 		return err
