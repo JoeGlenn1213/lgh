@@ -51,7 +51,7 @@ func GetGitVersion() (string, error) {
 func InitBareRepo(barePath string) error {
 	// Ensure parent directory exists
 	parentDir := filepath.Dir(barePath)
-	if err := os.MkdirAll(parentDir, 0755); err != nil {
+	if err := os.MkdirAll(parentDir, 0700); err != nil {
 		return fmt.Errorf("failed to create parent directory: %w", err)
 	}
 
@@ -167,6 +167,7 @@ func GetDefaultBranch(repoPath string) (string, error) {
 	if err != nil {
 		// Fallback to checking common branch names
 		for _, branch := range []string{"main", "master"} {
+			// nolint:gosec // G204: Subprocess launched with variable. repoPath and branch are trusted components.
 			checkCmd := exec.Command("git", "-C", repoPath, "rev-parse", "--verify", branch)
 			if checkCmd.Run() == nil {
 				return branch, nil

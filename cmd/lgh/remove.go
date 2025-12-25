@@ -26,11 +26,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/JoeGlenn1213/lgh/internal/config"
 	"github.com/JoeGlenn1213/lgh/internal/git"
 	"github.com/JoeGlenn1213/lgh/internal/registry"
 	"github.com/JoeGlenn1213/lgh/pkg/ui"
-	"github.com/spf13/cobra"
 )
 
 var (

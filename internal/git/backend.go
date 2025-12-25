@@ -18,11 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+// Package git provides Git backend and repository management for LGH
 package git
 
 import (
 	"fmt"
 	"net/http"
+
+	// nolint:gosec // G504: net/http/cgi is required for Git backend and safe in modern Go.
 	"net/http/cgi"
 	"os"
 	"os/exec"

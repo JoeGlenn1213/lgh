@@ -28,8 +28,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/JoeGlenn1213/lgh/internal/config"
 	"gopkg.in/yaml.v3"
+
+	"github.com/JoeGlenn1213/lgh/internal/config"
 )
 
 // FileLock is defined in lock_unix.go and lock_windows.go
