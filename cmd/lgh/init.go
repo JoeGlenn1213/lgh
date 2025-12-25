@@ -45,7 +45,7 @@ This command creates:
 	RunE: runInit,
 }
 
-func runInit(cmd *cobra.Command, args []string) error {
+func runInit(_ *cobra.Command, args []string) error {
 	ui.Title("Initializing LGH Environment")
 
 	lghDir := config.GetLGHDir()
@@ -66,7 +66,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 	dirs := []string{lghDir, reposDir}
 	for _, dir := range dirs {
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0700); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
 		}
 		ui.Success("Created %s", dir)
@@ -81,7 +81,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 	// Create empty mappings file
 	mappingsPath := config.GetMappingsPath()
-	if err := os.WriteFile(mappingsPath, []byte("repos: []\n"), 0644); err != nil {
+	if err := os.WriteFile(mappingsPath, []byte("repos: []\n"), 0600); err != nil {
 		return fmt.Errorf("failed to create mappings file: %w", err)
 	}
 	ui.Success("Created %s", mappingsPath)

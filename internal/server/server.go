@@ -76,9 +76,9 @@ func (s *Server) Start() error {
 	mux := http.NewServeMux()
 
 	// Health check endpoint (always public, bypasses auth)
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		_ = w.Write([]byte("OK"))
 	})
 
 	// Git backend for all .git paths
@@ -140,7 +140,7 @@ func (s *Server) Stop() error {
 // savePID saves the current process ID to a file
 func (s *Server) savePID() error {
 	pidPath := config.GetPIDPath()
-	return os.WriteFile(pidPath, []byte(fmt.Sprintf("%d", os.Getpid())), 0644)
+	return os.WriteFile(pidPath, []byte(fmt.Sprintf("%d", os.Getpid())), 0600)
 }
 
 // handleShutdown handles graceful shutdown signals
@@ -226,6 +226,7 @@ func (rw *responseWriter) WriteHeader(code int) {
 // Fixed: Uses platform-specific checkProcessRunning to handle PID reuse and existence check
 func IsRunning() (bool, int) {
 	pidPath := config.GetPIDPath()
+	// nolint:gosec // G304: Potential file inclusion via variable. pidPath is a trusted path from config.
 	data, err := os.ReadFile(pidPath)
 	if err != nil {
 		return false, 0

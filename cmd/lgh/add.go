@@ -65,7 +65,7 @@ func init() {
 	addCmd.Flags().BoolVar(&noRemote, "no-remote", false, "Don't add 'lgh' remote to the source repository")
 }
 
-func runAdd(cmd *cobra.Command, args []string) error {
+func runAdd(_ *cobra.Command, args []string) error {
 	// Ensure initialized
 	if err := ensureInitialized(); err != nil {
 		return err

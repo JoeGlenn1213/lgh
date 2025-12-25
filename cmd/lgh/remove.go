@@ -95,7 +95,7 @@ func isPathSafe(basePath, targetPath string) bool {
 	return strings.HasPrefix(realTarget, realBase) || realTarget == strings.TrimSuffix(realBase, string(os.PathSeparator))
 }
 
-func runRemove(cmd *cobra.Command, args []string) error {
+func runRemove(_ *cobra.Command, args []string) error {
 	// Ensure initialized
 	if err := ensureInitialized(); err != nil {
 		return err
@@ -135,7 +135,7 @@ func runRemove(cmd *cobra.Command, args []string) error {
 		var confirm string
 		fmt.Scanln(&confirm)
 		if confirm != "y" && confirm != "Y" {
-			ui.Info("Cancelled.")
+			ui.Info("Canceled.")
 			return nil
 		}
 		fmt.Println()

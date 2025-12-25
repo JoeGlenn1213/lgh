@@ -103,9 +103,9 @@ func TestLGHStatus(t *testing.T) {
 
 	// Run lgh status
 	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
-	cmd := exec.Command(lghBinary, "status")
-	cmd.Env = append(os.Environ(), "HOME="+tmpHome)
-	output, err := cmd.CombinedOutput()
+	statusCmd := exec.Command(lghBinary, "status")
+	statusCmd.Env = append(os.Environ(), "HOME="+tmpHome)
+	output, err := statusCmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("lgh status failed: %v\nOutput: %s", err, output)
 	}
@@ -137,9 +137,9 @@ func TestLGHList(t *testing.T) {
 
 	// Run lgh list (should show empty)
 	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
-	cmd := exec.Command(lghBinary, "list")
-	cmd.Env = append(os.Environ(), "HOME="+tmpHome)
-	output, err := cmd.CombinedOutput()
+	listCmd := exec.Command(lghBinary, "list")
+	listCmd.Env = append(os.Environ(), "HOME="+tmpHome)
+	output, err := listCmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("lgh list failed: %v\nOutput: %s", err, output)
 	}
@@ -176,17 +176,17 @@ func TestLGHAddAndList(t *testing.T) {
 
 	// Create a file and commit
 	readmeFile := filepath.Join(testRepo, "README.md")
-	if err := os.WriteFile(readmeFile, []byte("# Test Repo\n"), 0644); err != nil {
+	if err := os.WriteFile(readmeFile, []byte("# Test Repo\n"), 0600); err != nil {
 		t.Fatalf("Failed to create README: %v", err)
 	}
 
 	gitAdd := exec.Command("git", "add", ".")
 	gitAdd.Dir = testRepo
-	gitAdd.CombinedOutput()
+	_ = gitAdd.Run()
 
 	gitCommit := exec.Command("git", "-c", "user.email=test@test.com", "-c", "user.name=Test", "commit", "-m", "Initial commit")
 	gitCommit.Dir = testRepo
-	gitCommit.CombinedOutput()
+	_ = gitCommit.Run()
 
 	// First init LGH
 	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
@@ -244,19 +244,19 @@ func TestLGHRemove(t *testing.T) {
 	// Initialize git repo
 	gitInit := exec.Command("git", "init")
 	gitInit.Dir = testRepo
-	gitInit.CombinedOutput()
+	_ = gitInit.Run()
 
 	// First init LGH
 	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
-	initCmd := exec.Command(lghBinary, "init")
-	initCmd.Env = append(os.Environ(), "HOME="+tmpHome)
-	initCmd.CombinedOutput()
+	initCmdNoShadow := exec.Command(lghBinary, "init")
+	initCmdNoShadow.Env = append(os.Environ(), "HOME="+tmpHome)
+	_ = initCmdNoShadow.Run()
 
 	// Add the test repo
 	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
-	addCmd := exec.Command(lghBinary, "add", testRepo, "--name", "test-repo", "--no-remote")
-	addCmd.Env = append(os.Environ(), "HOME="+tmpHome)
-	addCmd.CombinedOutput()
+	addCmdNoShadow := exec.Command(lghBinary, "add", testRepo, "--name", "test-repo", "--no-remote")
+	addCmdNoShadow.Env = append(os.Environ(), "HOME="+tmpHome)
+	_ = addCmdNoShadow.Run()
 
 	// Remove the repo
 	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
@@ -275,9 +275,9 @@ func TestLGHRemove(t *testing.T) {
 
 	// Verify not in list
 	// nolint:gosec // G204: Subprocess launched with variable. lghBinary is a trusted path.
-	listCmd := exec.Command(lghBinary, "list")
-	listCmd.Env = append(os.Environ(), "HOME="+tmpHome)
-	output, _ = listCmd.CombinedOutput()
+	listCmdNoShadow := exec.Command(lghBinary, "list")
+	listCmdNoShadow.Env = append(os.Environ(), "HOME="+tmpHome)
+	output, _ = listCmdNoShadow.CombinedOutput()
 	if strings.Contains(string(output), "test-repo") {
 		t.Error("Repository still shown in list after removal")
 	}
