@@ -29,7 +29,7 @@ import (
 
 var (
 	// Version information
-	Version = "1.0.1"
+	Version = "1.0.2"
 	// BuildDate is the timestamp when the binary was built
 	BuildDate = "unknown"
 	// GitCommit is the commit hash of the build
@@ -67,6 +67,9 @@ func init() {
 Build Date: %s
 Git Commit: %s
 `, Version, BuildDate, GitCommit))
+
+	// Add -v shorthand for version (Cobra uses --version by default)
+	rootCmd.Flags().BoolP("version", "v", false, "Print version information")
 
 	// Add subcommands
 	rootCmd.AddCommand(initCmd)
