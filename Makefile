@@ -30,7 +30,7 @@ release: clean
 	@for platform in $(PLATFORMS); do \
 		GOOS=$$(echo $$platform | cut -d/ -f1); \
 		GOARCH=$$(echo $$platform | cut -d/ -f2); \
-		output=$(DIST_DIR)/$(BINARY_NAME)-$$GOOS-$$GOARCH; \
+		output=$(DIST_DIR)/$(BINARY_NAME)-$(VERSION)-$$GOOS-$$GOARCH; \
 		if [ "$$GOOS" = "windows" ]; then output=$$output.exe; fi; \
 		echo "Building $$output..."; \
 		CGO_ENABLED=0 GOOS=$$GOOS GOARCH=$$GOARCH go build -ldflags="$(LDFLAGS)" -o $$output ./cmd/lgh/; \
