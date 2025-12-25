@@ -1,56 +1,58 @@
-# LGH 安全指南
+# LGH Security Guide
 
-本文档介绍如何安全地部署和使用 LGH。
+[中文](SECURITY.zh-CN.md)
 
-## 🔒 安全模型
+This document describes how to securely deploy and use LGH.
 
-LGH 默认绑定到 `127.0.0.1`，这意味着只有本机可以访问。当需要暴露到网络时，必须采取额外的安全措施。
+## 🔒 Security Model
 
-## 安全级别
+LGH binds to `127.0.0.1` by default, meaning only the local machine can access it. When exposing to a network, additional security measures must be taken.
 
-### 级别 1: 本地使用（默认，最安全）
+## Security Levels
+
+### Level 1: Local Use (Default, Most Secure)
 
 ```bash
-lgh serve  # 默认 127.0.0.1:9418
+lgh serve  # Default 127.0.0.1:9418
 ```
 
-- ✅ 只有本机可访问
-- ✅ 无需额外配置
-- ❌ 无法远程访问
+- ✅ Only accessible from local machine
+- ✅ No additional configuration needed
+- ❌ No remote access
 
-### 级别 2: 内置 Basic Auth（推荐快速使用）
+### Level 2: Built-in Basic Auth (Quick Setup)
 
 ```bash
-# 1. 设置认证
+# 1. Setup authentication
 lgh auth setup
 
-# 2. 启动服务（可绑定到网络）
+# 2. Start server (can bind to network)
 lgh serve --bind 0.0.0.0
 
-# 3. 客户端使用
+# 3. Client usage
 git clone http://username:password@192.168.1.100:9418/repo.git
 ```
 
-配置文件示例 (`~/.localgithub/config.yaml`):
+Configuration example (`~/.localgithub/config.yaml`):
 ```yaml
 port: 9418
 bind_address: "0.0.0.0"
-read_only: true  # 推荐：只读模式
+read_only: true  # Recommended: read-only mode
 auth_enabled: true
 auth_user: "git-user"
 auth_password_hash: "salt:hash..."
 ```
 
-### 级别 3: 反向代理 + TLS（推荐生产环境）
+### Level 3: Reverse Proxy + TLS (Production Recommended)
 
-这是**最安全的方案**，LGH 仍绑定到 127.0.0.1，由成熟的反向代理处理认证和 TLS。
+This is the **most secure approach**, with LGH still binding to 127.0.0.1 and a mature reverse proxy handling authentication and TLS.
 
-#### Caddy 配置（推荐）
+#### Caddy Configuration (Recommended)
 
 ```caddyfile
 # Caddyfile
 git.example.com {
-    # 自动 HTTPS
+    # Automatic HTTPS
     basicauth * {
         git-user $2a$14$hashhere...
     }
@@ -59,14 +61,14 @@ git.example.com {
 ```
 
 ```bash
-# 启动 LGH（仅本地）
+# Start LGH (local only)
 lgh serve
 
-# 启动 Caddy
+# Start Caddy
 caddy run
 ```
 
-#### Nginx 配置
+#### Nginx Configuration
 
 ```nginx
 server {
@@ -84,88 +86,88 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         
-        # Git 需要的大超时
+        # Large timeouts needed for Git
         proxy_read_timeout 3600;
         proxy_send_timeout 3600;
-        client_max_body_size 0;  # 无限制
+        client_max_body_size 0;  # Unlimited
     }
 }
 ```
 
-生成 htpasswd:
+Generate htpasswd:
 ```bash
 htpasswd -c /etc/nginx/.htpasswd git-user
 ```
 
-### 级别 4: 隧道服务（适合临时共享）
+### Level 4: Tunnel Services (Temporary Sharing)
 
 #### Cloudflare Tunnel + Access
 
 ```bash
-# 1. 安装 cloudflared
+# 1. Install cloudflared
 brew install cloudflare/cloudflare/cloudflared
 
-# 2. 创建隧道
+# 2. Create tunnel
 cloudflared tunnel create lgh
 
-# 3. 配置 Access 策略（在 Cloudflare 面板）
-# 4. 运行隧道
+# 3. Configure Access policy (in Cloudflare dashboard)
+# 4. Run tunnel
 cloudflared tunnel --url http://localhost:9418
 ```
 
 #### ngrok + Basic Auth
 
 ```bash
-# ngrok 支持内置认证
+# ngrok supports built-in auth
 ngrok http 9418 --auth="user:password"
 ```
 
-## 🛡️ 安全检查清单
+## 🛡️ Security Checklist
 
-### 部署前
+### Before Deployment
 
-- [ ] 使用强密码（至少 12 字符）
-- [ ] 配置文件权限为 0600
-- [ ] 考虑使用只读模式
-- [ ] 检查防火墙规则
+- [ ] Use strong passwords (at least 12 characters)
+- [ ] Config file permissions set to 0600
+- [ ] Consider using read-only mode
+- [ ] Check firewall rules
 
-### 部署后
+### After Deployment
 
-- [ ] 定期更新 LGH
-- [ ] 监控访问日志
-- [ ] 定期轮换密码
+- [ ] Regularly update LGH
+- [ ] Monitor access logs
+- [ ] Rotate passwords periodically
 
-## 🚫 不推荐的做法
+## 🚫 Not Recommended
 
 ```bash
-# ❌ 错误：直接暴露无认证
+# ❌ Wrong: Direct exposure without auth
 lgh serve --bind 0.0.0.0
 
-# ❌ 错误：使用隧道但无认证
+# ❌ Wrong: Tunnel without auth
 ngrok http 9418
 
-# ❌ 错误：弱密码
+# ❌ Wrong: Weak password
 lgh auth hash "123456"
 ```
 
-## ✅ 推荐做法
+## ✅ Recommended Practices
 
 ```bash
-# ✅ 正确：本地使用
+# ✅ Correct: Local use
 lgh serve
 
-# ✅ 正确：网络暴露 + 认证 + 只读
+# ✅ Correct: Network exposure + auth + read-only
 lgh auth setup
 lgh serve --bind 0.0.0.0 --read-only
 
-# ✅ 正确：反向代理（最佳）
-lgh serve  # 只监听 localhost
-caddy run  # 处理 TLS 和认证
+# ✅ Correct: Reverse proxy (best)
+lgh serve  # Listen only on localhost
+caddy run  # Handle TLS and auth
 ```
 
-## 📋 配置模板
+## 📋 Configuration Templates
 
-### 最小安全配置
+### Minimal Secure Config
 
 ```yaml
 # ~/.localgithub/config.yaml
@@ -174,7 +176,7 @@ bind_address: "127.0.0.1"
 read_only: false
 ```
 
-### 内网共享配置
+### Internal Network Sharing
 
 ```yaml
 port: 9418
@@ -185,28 +187,28 @@ auth_user: "team"
 auth_password_hash: "your-hash-here"
 ```
 
-### 生产配置
+### Production Config
 
 ```yaml
 port: 9418
-bind_address: "127.0.0.1"  # 只本地，反向代理处理网络
+bind_address: "127.0.0.1"  # Local only, reverse proxy handles network
 read_only: false
-# 认证由反向代理处理
+# Authentication handled by reverse proxy
 auth_enabled: false
 ```
 
-## 🔐 密码哈希
+## 🔐 Password Hashing
 
-LGH 使用 HMAC-SHA256 加盐哈希存储密码：
+LGH uses HMAC-SHA256 with salt for password hashing:
 
 ```bash
-# 生成密码哈希
+# Generate password hash
 lgh auth hash
 
-# 哈希格式：salt:hash
-# 例如：a1b2c3d4e5:f6a7b8c9d0e1f2...
+# Hash format: salt:hash
+# Example: a1b2c3d4e5:f6a7b8c9d0e1f2...
 ```
 
-## 📞 报告安全问题
+## 📞 Reporting Security Issues
 
-如发现安全漏洞，请发送邮件至 security@example.com，不要公开披露。
+If you discover a security vulnerability, please email security@example.com. Do not disclose publicly.

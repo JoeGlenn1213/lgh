@@ -1,41 +1,43 @@
 # Contributing to LGH
 
-感谢你对 LGH 的关注！我们欢迎各种形式的贡献。
+[中文](CONTRIBUTING.zh-CN.md)
 
-## 🚀 开始贡献
+Thank you for your interest in LGH! We welcome all forms of contributions.
 
-### 1. Fork 和克隆
+## 🚀 Getting Started
+
+### 1. Fork and Clone
 
 ```bash
-# Fork 本仓库，然后克隆你的 fork
+# Fork this repository, then clone your fork
 git clone https://github.com/YOUR_USERNAME/lgh.git
 cd lgh
 ```
 
-### 2. 创建分支
+### 2. Create a Branch
 
 ```bash
 git checkout -b feature/your-feature-name
-# 或
+# or
 git checkout -b fix/your-bug-fix
 ```
 
-### 3. 开发
+### 3. Development
 
 ```bash
-# 安装依赖
+# Install dependencies
 go mod tidy
 
-# 构建
+# Build
 go build -o lgh ./cmd/lgh/
 
-# 运行测试
+# Run tests
 go test ./... -v
 ```
 
-### 4. 提交更改
+### 4. Commit Changes
 
-遵循 [Conventional Commits](https://www.conventionalcommits.org/) 规范：
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```bash
 git commit -m "feat: add new tunnel method"
@@ -44,265 +46,265 @@ git commit -m "docs: update README with new examples"
 git commit -m "security: fix password echo vulnerability"
 ```
 
-### 5. 推送和创建 PR
+### 5. Push and Create PR
 
 ```bash
 git push origin feature/your-feature-name
 ```
 
-然后在 GitHub 上创建 Pull Request。
+Then create a Pull Request on GitHub.
 
-## 📝 代码规范
+## 📝 Code Standards
 
-### Go 代码风格
+### Go Code Style
 
-- 使用 `gofmt` 格式化代码
-- 遵循 [Effective Go](https://golang.org/doc/effective_go) 指南
-- 为公共函数和类型添加文档注释
+- Use `gofmt` to format code
+- Follow [Effective Go](https://golang.org/doc/effective_go) guidelines
+- Add documentation comments for public functions and types
 
-### 提交规范
+### Commit Convention
 
-- `feat:` 新功能
-- `fix:` Bug 修复
-- `docs:` 文档更新
-- `test:` 测试相关
-- `refactor:` 代码重构
-- `security:` 安全修复
-- `chore:` 构建/工具相关
+- `feat:` New feature
+- `fix:` Bug fix
+- `docs:` Documentation update
+- `test:` Test related
+- `refactor:` Code refactoring
+- `security:` Security fix
+- `chore:` Build/tool related
 
-## 🔒 安全注意事项
+## 🔒 Security Considerations
 
-为 LGH 贡献代码时，请特别注意以下安全问题：
+When contributing to LGH, please pay special attention to:
 
-- **密码处理**：密码必须使用隐藏输入，不得在终端回显
-- **密码存储**：只存储加盐哈希，不存储明文
-- **路径验证**：文件操作前必须验证路径安全性
-- **最小权限**：配置文件权限应为 0600
+- **Password Handling**: Passwords must use hidden input, never echo in terminal
+- **Password Storage**: Only store salted hashes, never plaintext
+- **Path Validation**: Validate path safety before file operations
+- **Least Privilege**: Config file permissions should be 0600
 
-如发现安全漏洞，请私下报告，不要公开披露。
+If you discover a security vulnerability, please report privately, not publicly.
 
-## 🧪 测试
+## 🧪 Testing
 
-### 运行测试
+### Run Tests
 
 ```bash
-# 所有测试
+# All tests
 go test ./... -v
 
-# 短测试（跳过集成测试）
+# Short tests (skip integration)
 go test ./... -v -short
 
-# 带覆盖率
+# With coverage
 go test ./... -v -cover
 
-# 安全检查
+# Security check
 make security
 ```
 
-### 测试要求
+### Test Requirements
 
-- 新功能必须包含测试
-- Bug 修复应该包含回归测试
-- 安全修复必须包含测试验证
-- 保持测试覆盖率
+- New features must include tests
+- Bug fixes should include regression tests
+- Security fixes must include test validation
+- Maintain test coverage
 
-## � CI/CD 流程
+## 🔄 CI/CD Pipeline
 
-所有 Pull Request 必须通过 CI 检查才能合并。CI 流程包括三个主要阶段：
+All Pull Requests must pass CI checks before merging. The CI pipeline includes three main stages:
 
-### 1. 代码检查 (Lint)
+### 1. Code Linting
 
-使用 `golangci-lint v1.60` 进行代码质量检查：
+Using `golangci-lint v1.60` for code quality checks:
 
 ```bash
-# 本地运行 lint（推荐在提交前运行）
+# Run lint locally (recommended before committing)
 make lint
-# 或
+# or
 golangci-lint run
 ```
 
-**必须通过的检查项：**
-- ✅ `govet` - Go 官方静态分析工具（包括 shadow 检查）
-- ✅ `staticcheck` - 高级静态分析
-- ✅ `gosimple` - 简化代码建议
-- ✅ `unused` - 未使用代码检测
-- ✅ `ineffassign` - 低效赋值检测
-- ✅ `gosec` - 安全扫描（G104, G204, G304, G115 等）
-- ✅ `revive` - 代码风格检查
-- ✅ `goimports` - Import 排序和格式化（使用 `github.com/JoeGlenn1213/lgh` 作为 local-prefix）
-- ✅ `gofmt` - 代码格式化
-- ✅ `typecheck` - 类型检查
+**Required checks:**
+- ✅ `govet` - Official Go static analysis (including shadow detection)
+- ✅ `staticcheck` - Advanced static analysis
+- ✅ `gosimple` - Code simplification suggestions
+- ✅ `unused` - Unused code detection
+- ✅ `ineffassign` - Ineffective assignment detection
+- ✅ `gosec` - Security scanning (G104, G204, G304, G115, etc.)
+- ✅ `revive` - Code style checking
+- ✅ `goimports` - Import sorting and formatting (with `github.com/JoeGlenn1213/lgh` as local-prefix)
+- ✅ `gofmt` - Code formatting
+- ✅ `typecheck` - Type checking
 
-**常见问题修复：**
+**Common Issue Fixes:**
 
-1. **未使用的参数** (revive)：
+1. **Unused Parameters** (revive):
    ```go
-   // ❌ 错误
+   // ❌ Wrong
    func runCommand(cmd *cobra.Command, args []string) error {
-       // args 未使用
+       // args unused
    }
    
-   // ✅ 正确
+   // ✅ Correct
    func runCommand(cmd *cobra.Command, _ []string) error {
-       // 使用 _ 明确表示忽略
+       // Use _ to explicitly ignore
    }
    ```
 
-2. **变量 shadowing** (govet)：
+2. **Variable Shadowing** (govet):
    ```go
-   // ❌ 错误
+   // ❌ Wrong
    err := doSomething()
    if err := doAnother(); err != nil {  // shadows outer err
        return err
    }
    
-   // ✅ 正确
+   // ✅ Correct
    err := doSomething()
    if err2 := doAnother(); err2 != nil {
        return err2
    }
    ```
 
-3. **未处理的错误** (gosec G104)：
+3. **Unhandled Errors** (gosec G104):
    ```go
-   // ❌ 错误
+   // ❌ Wrong
    file.Close()
    
-   // ✅ 正确
-   _ = file.Close()  // 明确忽略
-   // 或
+   // ✅ Correct
+   _ = file.Close()  // Explicitly ignore
+   // or
    if err := file.Close(); err != nil {
        log.Printf("failed to close: %v", err)
    }
    ```
 
-4. **文件权限问题** (gosec G306)：
+4. **File Permissions** (gosec G306):
    ```go
-   // ❌ 错误
+   // ❌ Wrong
    os.WriteFile(path, data, 0644)
    
-   // ✅ 正确（敏感文件）
+   // ✅ Correct (for sensitive files)
    os.WriteFile(path, data, 0600)
    ```
 
-### 2. 许可证检查 (License Check)
+### 2. License Check
 
-使用 `addlicense` 确保所有源代码文件包含 MIT 许可证头：
+Using `addlicense` to ensure all source files contain MIT license headers:
 
 ```bash
-# 添加许可证头
+# Add license headers
 addlicense -l mit -c "JoeGlenn1213" **/*.go
 
-# 检查许可证
+# Check licenses
 addlicense -check -l mit -c "JoeGlenn1213" .
 ```
 
-**要求：**
-- 所有 `.go` 文件必须包含 MIT 许可证头
-- 排除 `dist/` 和 `vendor/` 目录
+**Requirements:**
+- All `.go` files must include MIT license headers
+- Exclude `dist/` and `vendor/` directories
 
-### 3. 跨平台测试 (Test)
+### 3. Cross-Platform Testing
 
-在三个平台上运行完整测试套件：
+Running full test suite on three platforms:
 
-**测试平台：**
+**Test Platforms:**
 - 🐧 Ubuntu (latest)
-- 🍎 macOS (latest) 
+- 🍎 macOS (latest)
 - 🪟 Windows (latest)
 
-**测试命令：**
+**Test Commands:**
 ```bash
-# Linux: 运行所有测试 + race detector
+# Linux: All tests + race detector
 go test ./... -v -race
 
-# macOS/Windows: 运行所有测试（无 race detector）
+# macOS/Windows: All tests (without race detector)
 go test ./... -v
 ```
 
-**测试要求：**
-- ✅ 所有集成测试必须通过
-- ✅ 测试必须在 5 分钟内完成
-- ✅ 跨平台兼容性（Unix/Windows 路径处理）
-- ✅ 正确设置环境变量（`HOME` 和 `USERPROFILE`）
+**Test Requirements:**
+- ✅ All integration tests must pass
+- ✅ Tests must complete within 5 minutes
+- ✅ Cross-platform compatibility (Unix/Windows path handling)
+- ✅ Proper environment variables (`HOME` and `USERPROFILE`)
 
-### CI 配置文件
+### CI Configuration
 
-完整的 CI 配置见 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+See complete CI config at [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 
-### 本地验证流程
+### Local Verification
 
-在提交 PR 前，请确保本地通过所有检查：
+Before submitting a PR, ensure all checks pass locally:
 
 ```bash
-# 1. 格式化代码
+# 1. Format code
 go fmt ./...
 goimports -local github.com/JoeGlenn1213/lgh -w .
 
-# 2. 运行 linter
+# 2. Run linter
 golangci-lint run
 
-# 3. 运行测试
+# 3. Run tests
 go test ./... -v
 
-# 4. （可选）运行 race detector
+# 4. (Optional) Run race detector
 go test ./... -v -race
 
-# 5. 检查许可证
+# 5. Check licenses
 addlicense -check -l mit -c "JoeGlenn1213" .
 ```
 
-### CI 失败处理
+### CI Failure Handling
 
-如果 CI 失败：
+If CI fails:
 
-1. **查看日志**：点击失败的检查查看详细错误信息
-2. **本地修复**：在本地运行相同的命令重现问题
-3. **修复并推送**：修复后推送到同一 PR 分支，CI 会自动重新运行
-4. **寻求帮助**：如果遇到困难，在 PR 中评论说明问题
+1. **View Logs**: Click failed check to see detailed error messages
+2. **Fix Locally**: Run the same command locally to reproduce
+3. **Fix and Push**: Push fixes to the same PR branch, CI will re-run automatically
+4. **Ask for Help**: Comment on PR if you need assistance
 
-### 性能和稳定性要求
+### Performance and Stability Requirements
 
-- 测试不应该有 flaky（不稳定）行为
-- 集成测试应该正确清理临时文件
-- 使用唯一的临时目录避免冲突
-- Windows 路径处理使用 `filepath.ToSlash()` 转换
+- Tests should not have flaky behavior
+- Integration tests should clean up temporary files
+- Use unique temporary directories to avoid conflicts
+- Windows path handling: use `filepath.ToSlash()` for conversion
 
-## �📋 Issue 指南
+## 📋 Issue Guidelines
 
-### 报告 Bug
+### Reporting Bugs
 
-请包含以下信息：
+Please include:
 
-- LGH 版本 (`lgh --version`)
-- 操作系统和版本
-- 复现步骤
-- 预期行为
-- 实际行为
-- 相关日志
+- LGH version (`lgh --version`)
+- OS and version
+- Steps to reproduce
+- Expected behavior
+- Actual behavior
+- Relevant logs
 
-### 报告安全问题
+### Reporting Security Issues
 
-**不要在公开 Issue 中报告安全漏洞！**
+**DO NOT report security vulnerabilities in public issues!**
 
-请发送邮件至项目维护者，包含：
-- 漏洞描述
-- 复现步骤
-- 潜在影响
+Email project maintainers with:
+- Vulnerability description
+- Steps to reproduce
+- Potential impact
 
-### 功能请求
+### Feature Requests
 
-请描述：
+Please describe:
 
-- 你想解决的问题
-- 你提议的解决方案
-- 可能的替代方案
+- Problem you want to solve
+- Your proposed solution
+- Possible alternatives
 
-## 🏗️ 项目结构
+## 🏗️ Project Structure
 
 ```
 lgh/
-├── cmd/lgh/           # CLI 命令
-│   ├── main.go       # 入口点
+├── cmd/lgh/           # CLI commands
+│   ├── main.go       # Entry point
 │   ├── init.go       # lgh init
 │   ├── serve.go      # lgh serve
 │   ├── add.go        # lgh add
@@ -310,33 +312,33 @@ lgh/
 │   ├── status.go     # lgh status
 │   ├── remove.go     # lgh remove
 │   ├── tunnel.go     # lgh tunnel
-│   └── auth.go       # lgh auth (认证管理)
-├── internal/          # 内部包
-│   ├── config/       # 配置管理
-│   ├── git/          # Git 操作
-│   ├── registry/     # 仓库映射
-│   ├── server/       # HTTP 服务器 + 认证中间件
-│   ├── tunnel/       # 隧道功能
-│   └── mdns/         # mDNS 服务
-├── pkg/ui/           # 终端 UI
-├── docs/             # 文档
-│   └── SECURITY.md   # 安全指南
-└── test/             # 集成测试
+│   └── auth.go       # lgh auth (authentication)
+├── internal/          # Internal packages
+│   ├── config/       # Configuration management
+│   ├── git/          # Git operations
+│   ├── registry/     # Repository mapping
+│   ├── server/       # HTTP server + auth middleware
+│   ├── tunnel/       # Tunnel functionality
+│   └── mdns/         # mDNS service
+├── pkg/ui/           # Terminal UI
+├── docs/             # Documentation
+│   └── SECURITY.md   # Security guidelines
+└── test/             # Integration tests
 ```
 
 ## ✅ PR Checklist
 
-- [ ] 代码通过 `go fmt` 和 `go vet`
-- [ ] 所有测试通过
-- [ ] 添加了必要的测试
-- [ ] 更新了相关文档
-- [ ] 提交信息遵循规范
-- [ ] 安全敏感代码已审查
+- [ ] Code passes `go fmt` and `go vet`
+- [ ] All tests pass
+- [ ] Added necessary tests
+- [ ] Updated relevant documentation
+- [ ] Commit messages follow convention
+- [ ] Security-sensitive code reviewed
 
 ## 📄 License
 
-通过贡献代码，你同意你的贡献将按照 MIT 许可证授权。
+By contributing code, you agree that your contributions will be licensed under the MIT License.
 
 ---
 
-再次感谢你的贡献！如有问题，请随时提出 Issue。
+Thank you for your contribution! Feel free to open an issue if you have questions.
