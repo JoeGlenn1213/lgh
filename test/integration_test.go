@@ -379,8 +379,25 @@ func TestLGHServeAndClone(t *testing.T) {
 
 	// Verify cloned content
 	clonedReadme := filepath.Join(cloneDir, "cloned", "README.md")
-	if _, err := os.Stat(clonedReadme); os.IsNotExist(err) {
-		t.Error("Cloned README.md not found")
+	if _, statErr := os.Stat(clonedReadme); os.IsNotExist(statErr) {
+		// Debug output: list all files in the clone directory to see what was actually cloned
+		var files []string
+		_ = filepath.Walk(cloneDir, func(path string, info os.FileInfo, err error) error {
+			if err == nil {
+				files = append(files, path)
+			}
+			return nil
+		})
+		t.Errorf("Cloned README.md not found. Files in %s: %v", cloneDir, files)
+	} else {
+		// Check content
+		// nolint:gosec // G304: trusted path in test
+		content, readErr := os.ReadFile(clonedReadme)
+		if readErr != nil {
+			t.Errorf("Failed to read README: %v", readErr)
+		} else if !strings.Contains(string(content), "Test Repo") {
+			t.Errorf("Unexpected content: %s", string(content))
+		}
 	}
 
 	t.Log("lgh serve and clone: PASSED")
