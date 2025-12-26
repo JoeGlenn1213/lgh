@@ -226,6 +226,15 @@ func PushToRemote(repoPath, remoteName, branch string) error {
 	return nil
 }
 
+// PushToRemoteUpstream pushes to a remote repository and sets upstream
+func PushToRemoteUpstream(repoPath, remoteName, branch string) error {
+	cmd := exec.Command("git", "-C", repoPath, "push", "-u", remoteName, branch)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("failed to push: %s, %w", string(output), err)
+	}
+	return nil
+}
+
 // GetRemotes returns a list of all remotes
 func GetRemotes(repoPath string) ([]Remote, error) {
 	cmd := exec.Command("git", "-C", repoPath, "remote", "-v")

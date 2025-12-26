@@ -18,6 +18,14 @@
 - **Reliability**: Graceful shutdown ensures all events are logged.
 - **Documentation**: Comprehensive README rewrite covering all v1.0.5 features and security guidelines.
 
+## v1.0.7 (2025-12-26)
+
+### New Features
+- **Workflow**: Added `--push` flag to `lgh add`.
+  - `lgh add . --push`: Automatically pushes current branch to LGH remote after adding.
+  - `lgh add . --push-branch <name>`: Pushes a specific branch.
+  - Improves "out-of-the-box" experience by eliminating the manual `git push` step.
+
 ## v1.0.6 (2025-12-26)
 
 ### New Features
