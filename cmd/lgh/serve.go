@@ -39,6 +39,7 @@ var (
 	serverPort   int
 	bindAddress  string
 	daemonFlag   bool
+	allowUnsafe  bool
 )
 
 var serveCmd = &cobra.Command{
@@ -56,7 +57,8 @@ Examples:
   lgh serve --daemon           # Start in background
   lgh serve --read-only        # Start in read-only mode
   lgh serve --port 8080        # Use custom port
-  lgh serve --mdns             # Enable mDNS discovery`,
+  lgh serve --mdns             # Enable mDNS discovery
+  lgh serve --bind 0.0.0.0 --allow-unsafe # Allow public access (DANGEROUS)`,
 	RunE: runServe,
 }
 
@@ -66,6 +68,7 @@ func init() {
 	serveCmd.Flags().IntVarP(&serverPort, "port", "p", 0, "Port to listen on (default: 9418)")
 	serveCmd.Flags().StringVarP(&bindAddress, "bind", "b", "", "Address to bind to (default: 127.0.0.1)")
 	serveCmd.Flags().BoolVarP(&daemonFlag, "daemon", "d", false, "Run server in background (daemon mode)")
+	serveCmd.Flags().BoolVar(&allowUnsafe, "allow-unsafe", false, "Allow binding to non-localhost without auth/read-only")
 }
 
 func runServe(_ *cobra.Command, _ []string) error {
@@ -96,11 +99,20 @@ func runServe(_ *cobra.Command, _ []string) error {
 		cfg.MDNSEnabled = true
 	}
 
-	// Security warning for non-localhost bindings
-	if cfg.BindAddress != "127.0.0.1" && cfg.BindAddress != "localhost" {
-		ui.Warning("⚠️  WARNING: Binding to %s exposes LGH to the network!", cfg.BindAddress)
-		if !cfg.ReadOnly {
-			ui.Warning("⚠️  Consider using --read-only to prevent unauthorized push access")
+	// Security Validation for non-localhost bindings
+	isLocalhost := cfg.BindAddress == "127.0.0.1" || cfg.BindAddress == "localhost"
+	isSafeMode := cfg.AuthEnabled || cfg.ReadOnly
+
+	if !isLocalhost {
+		if !isSafeMode && !allowUnsafe {
+			return fmt.Errorf("SECURITY ERROR: Binding to %s exposes LGH to the network without protection.\n"+
+				"To proceed, you must enable Authentication, Read-Only mode, or use --allow-unsafe.", cfg.BindAddress)
+		}
+
+		if allowUnsafe && !isSafeMode {
+			ui.Warning("⚠️  RUNNING IN UNSAFE MODE: External access enabled without Auth or Read-Only!")
+		} else {
+			ui.Info("ℹ️  Running in networked mode (Protected by Auth/ReadOnly)")
 		}
 	}
 

@@ -150,7 +150,11 @@ func Save(cfg *Config) error {
 	viper.Set("data_dir", cfg.DataDir)
 
 	configPath := GetConfigPath()
-	return viper.WriteConfigAs(configPath)
+	if err := viper.WriteConfigAs(configPath); err != nil {
+		return err
+	}
+	// SECURITY: Ensure config file is only readable by owner to protect password hash
+	return os.Chmod(configPath, 0600)
 }
 
 // CreateDefaultConfig creates a default configuration file

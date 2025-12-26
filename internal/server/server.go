@@ -33,6 +33,7 @@ import (
 	"time"
 
 	"github.com/JoeGlenn1213/lgh/internal/config"
+	"github.com/JoeGlenn1213/lgh/internal/event"
 	"github.com/JoeGlenn1213/lgh/internal/git"
 	"github.com/JoeGlenn1213/lgh/pkg/ui"
 )
@@ -157,6 +158,9 @@ func (s *Server) handleShutdown() {
 	} else {
 		ui.Success("Server stopped gracefully")
 	}
+
+	// Flush events
+	event.Shutdown()
 
 	os.Exit(0)
 }
