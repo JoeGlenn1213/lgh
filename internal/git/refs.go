@@ -11,15 +11,10 @@ func GetRefs(repoPath string) (map[string]string, error) {
 	output, err := cmd.CombinedOutput()
 	// show-ref returns exit code 1 if no refs exist (new repo)
 	if err != nil {
-		// If empty output, it's just an empty repo
-		if len(output) == 0 {
+		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
 			return make(map[string]string), nil
 		}
-		// If real error, return it
-		// But in a fresh bare repo, show-ref might fail.
-		// Let's assume empty map on error for safety in this context
-		// return nil, fmt.Errorf("failed to get refs: %w", err)
-		return make(map[string]string), nil
+		return nil, err
 	}
 
 	refs := make(map[string]string)

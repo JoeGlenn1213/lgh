@@ -63,6 +63,10 @@ func showRecentEvents(path string, n int) error {
 
 	var lines []string
 	scanner := bufio.NewScanner(file)
+	// Increase buffer size to handle potentially large event lines (up to 1MB)
+	buf := make([]byte, 0, 64*1024)
+	scanner.Buffer(buf, 1024*1024)
+
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
 	}

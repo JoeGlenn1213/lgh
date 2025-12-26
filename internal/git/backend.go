@@ -130,8 +130,9 @@ func (b *Backend) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Pre-push: capture refs
 	isPush := b.isPushRequest(r, gitPath)
 	var preRefs map[string]string
+	var preErr error
 	if isPush {
-		preRefs, _ = GetRefs(fullRepoPath)
+		preRefs, preErr = GetRefs(fullRepoPath)
 	}
 
 	handler.ServeHTTP(w, r)
@@ -140,32 +141,33 @@ func (b *Backend) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r.URL.Path = originalPath
 
 	// Post-push: compare refs and emit event
-	if isPush {
-		postRefs, _ := GetRefs(fullRepoPath)
+	if isPush && preErr == nil {
+		postRefs, err := GetRefs(fullRepoPath)
+		if err == nil {
+			changes := make(map[string]map[string]string)
+			zeroHash := "0000000000000000000000000000000000000000"
 
-		changes := make(map[string]map[string]string)
-		zeroHash := "0000000000000000000000000000000000000000"
-
-		// Created or Updated
-		for ref, newHash := range postRefs {
-			if oldHash, exists := preRefs[ref]; !exists {
-				changes[ref] = map[string]string{"old": zeroHash, "new": newHash, "action": "created"}
-			} else if oldHash != newHash {
-				changes[ref] = map[string]string{"old": oldHash, "new": newHash, "action": "updated"}
+			// Created or Updated
+			for ref, newHash := range postRefs {
+				if oldHash, exists := preRefs[ref]; !exists {
+					changes[ref] = map[string]string{"old": zeroHash, "new": newHash, "action": "created"}
+				} else if oldHash != newHash {
+					changes[ref] = map[string]string{"old": oldHash, "new": newHash, "action": "updated"}
+				}
 			}
-		}
 
-		// Deleted
-		for ref, oldHash := range preRefs {
-			if _, exists := postRefs[ref]; !exists {
-				changes[ref] = map[string]string{"old": oldHash, "new": zeroHash, "action": "deleted"}
+			// Deleted
+			for ref, oldHash := range preRefs {
+				if _, exists := postRefs[ref]; !exists {
+					changes[ref] = map[string]string{"old": oldHash, "new": zeroHash, "action": "deleted"}
+				}
 			}
-		}
 
-		if len(changes) > 0 {
-			event.Publish(event.GitPush, repoPath, map[string]interface{}{
-				"changes": changes,
-			})
+			if len(changes) > 0 {
+				event.Publish(event.GitPush, repoPath, map[string]interface{}{
+					"changes": changes,
+				})
+			}
 		}
 	}
 }

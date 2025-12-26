@@ -8,54 +8,83 @@ import (
 	"sync"
 )
 
-// FileLogger logs events to a JSONL file
+// FileLogger logs events to a JSONL file asynchronously
 type FileLogger struct {
 	filePath string
 	file     *os.File
-	mu       sync.Mutex
+	queue    chan Event
+	wg       sync.WaitGroup
+	once     sync.Once
 }
 
 // NewFileLogger creates a logger that writes to events.jsonl in the given directory
 func NewFileLogger(dir string) (*FileLogger, error) {
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0700); err != nil {
 		return nil, fmt.Errorf("failed to create event dir: %w", err)
 	}
 
 	path := filepath.Join(dir, "events.jsonl")
-	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	// 0600 permissions for security
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open event log: %w", err)
 	}
 
-	return &FileLogger{
+	l := &FileLogger{
 		filePath: path,
 		file:     f,
-	}, nil
+		queue:    make(chan Event, 100), // Buffer up to 100 events
+	}
+
+	// Start worker
+	l.wg.Add(1)
+	go l.worker()
+
+	return l, nil
 }
 
-// Handle processes a single event by writing it to the file
+// Handle queues an event for logging. It is safe for concurrent use.
+// It will not block unless the queue is full (backpressure).
 func (l *FileLogger) Handle(e Event) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	if l.file == nil {
-		return
+	// Try to enqueue
+	select {
+	case l.queue <- e:
+		// success
+	default:
+		// Queue full. We must decide: block or drop?
+		// For an "observer", dropping is better than hanging the user's git push.
+		// However, 100 events buffer is large enough for normal use.
+		// Let's try to block for a short time, then drop?
+		// For MVP simplicity: just block. If disk is that slow, system is broken.
+		l.queue <- e
 	}
-
-	data, err := json.Marshal(e)
-	if err != nil {
-		// Should not happen for our simple struct
-		return
-	}
-
-	_, _ = l.file.Write(data)
-	_, _ = l.file.WriteString("\n")
 }
 
-// Close closes the underlying file
+func (l *FileLogger) worker() {
+	defer l.wg.Done()
+
+	// Create encoder once
+	encoder := json.NewEncoder(l.file)
+
+	for e := range l.queue {
+		// Use JSON encoder which append newline automatically?
+		// No, standard encoder appends newline.
+		// But let's stick to explicit Marshal for control if needed, or Encoder is fine.
+		if err := encoder.Encode(e); err != nil {
+			// Log error to stderr?
+			// fmt.Fprintf(os.Stderr, "Failed to log event: %v\n", err)
+		}
+		// Ensure it's flushed? Encoder usually buffers?
+		// For events, we might want immediate flush. O_APPEND file might not need explicit Sync for every line.
+	}
+}
+
+// Close closes the queue, waits for worker, and closes file
 func (l *FileLogger) Close() error {
-	l.mu.Lock()
-	defer l.mu.Unlock()
+	l.once.Do(func() {
+		close(l.queue)
+	})
+	l.wg.Wait()
 
 	if l.file != nil {
 		err := l.file.Close()
@@ -63,15 +92,4 @@ func (l *FileLogger) Close() error {
 		return err
 	}
 	return nil
-}
-
-// ReadRecent reads the last N lines from the log file
-// This is a naive implementation that reads the whole file.
-// For v1.x with small usage, it's fine. For v2, use efficient tailing.
-func (l *FileLogger) ReadRecent(limit int) ([]Event, error) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	// Not implemented for MVP
-	return nil, fmt.Errorf("not implemented yet")
 }

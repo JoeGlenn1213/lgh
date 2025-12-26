@@ -10,6 +10,9 @@
 
 ### Fixes
 - **UI**: `lgh repo status` now correctly identifies the active remote based on upstream configuration.
+- **Security**: Hardened event log permissions (0600) and directory (0700).
+- **Performance**: Event logging is now asynchronous to avoid blocking Git operations.
+- **Reliability**: Improved error handling for repository reference tracking.
 
 ## v1.0.4 (2025-12-26)
 

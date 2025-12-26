@@ -103,7 +103,6 @@ Git Commit: %s
 	rootCmd.AddCommand(repoCmd)
 	rootCmd.AddCommand(remoteCmd)
 	rootCmd.AddCommand(cloneCmd)
-	rootCmd.AddCommand(cloneCmd)
 	rootCmd.AddCommand(doctorCmd)
 
 	// New in v1.0.5
