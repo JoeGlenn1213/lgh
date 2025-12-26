@@ -26,8 +26,11 @@ var (
 var eventsCmd = &cobra.Command{
 	Use:   "events",
 	Short: "View system events log",
-	Long:  `View the recent activity log (push events, repo management, etc.).`,
-	RunE:  runEvents,
+	Long: `View the recent activity log.
+	
+Supports filtering by event type (--type) and real-time watching (--watch).
+Optimization: Reads from the end of file for fast access to large logs.`,
+	RunE: runEvents,
 }
 
 func init() {

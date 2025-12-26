@@ -16,6 +16,7 @@
 - **Reliability**: Improved error handling for repository reference tracking.
 - **Reliability**: Guaranteed event flushing on CLI command exit.
 - **Reliability**: Graceful shutdown ensures all events are logged.
+- **Documentation**: Comprehensive README rewrite covering all v1.0.5 features and security guidelines.
 
 ## v1.0.4 (2025-12-26)
 
