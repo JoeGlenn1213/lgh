@@ -232,10 +232,6 @@ func runAdd(_ *cobra.Command, args []string) error {
 		} else {
 			ui.Warning("Skipping auto-push: could not determine branch name.")
 		}
-	} else if running, _ := server.IsRunning(); !running {
-		// Only show manual instructions if NOT auto-pushing (or auto-push failed/skipped logic handles it)
-		// But here we strictly handle the "manual instructions prompt"
-		// The original code printed instructions always. I'll preserve that flow for non-push case.
 	}
 
 	if !autoPush && pushBranch == "" {
