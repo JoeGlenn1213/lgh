@@ -6,7 +6,10 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 )
+
+const MaxLogSize = 10 * 1024 * 1024 // 10MB
 
 // FileLogger logs events to a JSONL file asynchronously
 type FileLogger struct {
@@ -60,20 +63,50 @@ func (l *FileLogger) Handle(e Event) {
 func (l *FileLogger) worker() {
 	defer l.wg.Done()
 
-	// Create encoder once
-	encoder := json.NewEncoder(l.file)
-
 	for e := range l.queue {
-		// Use JSON encoder which append newline automatically?
-		// No, standard encoder appends newline.
-		// But let's stick to explicit Marshal for control if needed, or Encoder is fine.
-		if err := encoder.Encode(e); err != nil {
-			// Log error to stderr?
-			// fmt.Fprintf(os.Stderr, "Failed to log event: %v\n", err)
+		if err := l.rotateIfNeeded(); err != nil {
+			// In case of rotation error, we try to proceed with current file
+			// or just ignore. Safety first (don't crash).
 		}
-		// Ensure it's flushed? Encoder usually buffers?
-		// For events, we might want immediate flush. O_APPEND file might not need explicit Sync for every line.
+
+		data, err := json.Marshal(e)
+		if err != nil {
+			continue
+		}
+
+		// Write directly to current file handle
+		if _, err := l.file.Write(data); err == nil {
+			_, _ = l.file.WriteString("\n")
+		}
 	}
+}
+
+func (l *FileLogger) rotateIfNeeded() error {
+	fi, err := l.file.Stat()
+	if err != nil {
+		return err
+	}
+
+	if fi.Size() < MaxLogSize {
+		return nil
+	}
+
+	// Rotate
+	_ = l.file.Close()
+
+	timestamp := time.Now().Format("20060102-150405")
+	backupPath := l.filePath + "." + timestamp
+
+	if err := os.Rename(l.filePath, backupPath); err != nil {
+		// Log error?
+	}
+
+	f, err := os.OpenFile(l.filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	if err != nil {
+		return err
+	}
+	l.file = f
+	return nil
 }
 
 // Close closes the queue, waits for worker, and closes file

@@ -5,7 +5,8 @@
 
 ### New Features
 - **Event System**: Introduced internal event bus and logging infrastructure.
-- **lgh events**: New command to view system activity logs (repo push, add, remove).
+- **Log Rotation**: Automatically rotates event logs > 10MB to ensure stability.
+- **lgh events**: New command to view system activity with `--type` filtering and efficient reverse reading.
 - **Git Push Tracking**: Server now explicitly captures push operations and logs reference changes with Commit IDs.
 
 ### Fixes

@@ -18,8 +18,9 @@ import (
 )
 
 var (
-	eventsLimit int
-	eventsWatch bool
+	eventsLimit  int
+	eventsWatch  bool
+	eventsFilter string
 )
 
 var eventsCmd = &cobra.Command{
@@ -32,6 +33,7 @@ var eventsCmd = &cobra.Command{
 func init() {
 	eventsCmd.Flags().IntVarP(&eventsLimit, "limit", "n", 20, "Number of events to show")
 	eventsCmd.Flags().BoolVarP(&eventsWatch, "watch", "w", false, "Watch for new events (tail -f)")
+	eventsCmd.Flags().StringVar(&eventsFilter, "type", "", "Filter events by type (e.g. git.push, repo.added)")
 }
 
 func runEvents(_ *cobra.Command, _ []string) error {
@@ -61,23 +63,69 @@ func showRecentEvents(path string, n int) error {
 	}
 	defer file.Close()
 
+	// Optimization: If file is larger than 2MB, read only last 2MB for recent events
+	// This helps with performance on large logs.
+	const maxReadSize = 2 * 1024 * 1024
+	var offset int64 = 0
+
+	fi, err := file.Stat()
+	if err == nil && fi.Size() > maxReadSize {
+		offset = fi.Size() - maxReadSize
+		if _, err := file.Seek(offset, 0); err != nil {
+			return err
+		}
+	}
+
 	var lines []string
 	scanner := bufio.NewScanner(file)
-	// Increase buffer size to handle potentially large event lines (up to 1MB)
+	// Increase buffer size
 	buf := make([]byte, 0, 64*1024)
 	scanner.Buffer(buf, 1024*1024)
+
+	// If we seeked, the first line might be partial, discard it
+	if offset > 0 {
+		scanner.Scan()
+	}
 
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
 	}
 
-	start := 0
-	if len(lines) > n {
-		start = len(lines) - n
+	// Filter and select last N in reverse
+	var output []string
+	count := 0
+
+	for i := len(lines) - 1; i >= 0; i-- {
+		line := lines[i]
+		if eventsFilter != "" {
+			// Fast check string contains to avoid json parse?
+			// No, safer to parse or just check matches since type is usually near start.
+			// Let's do a simple string matching first for performance logic?
+			// "type":"git.push"
+			if !strings.Contains(line, fmt.Sprintf(`"type":%q`, eventsFilter)) &&
+				!strings.Contains(line, fmt.Sprintf(`"type":"%s"`, eventsFilter)) {
+				// Handle json spacing variation? Basic check is "type":"VALUE"
+				// Safest is JSON decode.
+				var evt event.Event
+				if err := json.Unmarshal([]byte(line), &evt); err == nil {
+					if string(evt.Type) != eventsFilter {
+						continue
+					}
+				} else {
+					continue // skip broken lines
+				}
+			}
+		}
+
+		output = append([]string{line}, output...)
+		count++
+		if count >= n {
+			break
+		}
 	}
 
-	for i := start; i < len(lines); i++ {
-		printEventLine(lines[i])
+	for _, line := range output {
+		printEventLine(line)
 	}
 	return nil
 }
