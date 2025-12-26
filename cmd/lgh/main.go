@@ -109,7 +109,7 @@ Git Commit: %s
 	rootCmd.AddCommand(eventsCmd)
 
 	// Initialize Event System
-	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+	rootCmd.PersistentPreRun = func(_ *cobra.Command, _ []string) {
 		// Try to load config to get DataDir
 		// If fails (e.g. before lgh init), we simply skip event logging
 		if _, err := config.Load(); err == nil {

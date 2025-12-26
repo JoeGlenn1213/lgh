@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// MaxLogSize is the maximum size of the log file before rotation (10MB)
 const MaxLogSize = 10 * 1024 * 1024 // 10MB
 
 // FileLogger logs events to a JSONL file asynchronously
@@ -28,6 +29,7 @@ func NewFileLogger(dir string) (*FileLogger, error) {
 
 	path := filepath.Join(dir, "events.jsonl")
 	// 0600 permissions for security
+	// nolint:gosec // G304: path is internally constructed and trusted
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open event log: %w", err)
@@ -67,6 +69,7 @@ func (l *FileLogger) worker() {
 		if err := l.rotateIfNeeded(); err != nil {
 			// In case of rotation error, we try to proceed with current file
 			// or just ignore. Safety first (don't crash).
+			_ = err
 		}
 
 		data, err := json.Marshal(e)
@@ -99,8 +102,10 @@ func (l *FileLogger) rotateIfNeeded() error {
 
 	if err := os.Rename(l.filePath, backupPath); err != nil {
 		// Log error?
+		_ = err
 	}
 
+	// nolint:gosec // G304: filePath is trusted
 	f, err := os.OpenFile(l.filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		return err

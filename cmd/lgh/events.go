@@ -60,6 +60,7 @@ func runEvents(_ *cobra.Command, _ []string) error {
 }
 
 func showRecentEvents(path string, n int) error {
+	// nolint:gosec // G304: path is internally constructed from config
 	file, err := os.Open(path)
 	if err != nil {
 		return err
@@ -69,7 +70,7 @@ func showRecentEvents(path string, n int) error {
 	// Optimization: If file is larger than 2MB, read only last 2MB for recent events
 	// This helps with performance on large logs.
 	const maxReadSize = 2 * 1024 * 1024
-	var offset int64 = 0
+	var offset int64
 
 	fi, err := file.Stat()
 	if err == nil && fi.Size() > maxReadSize {
@@ -213,6 +214,7 @@ func printEventLine(line string) {
 }
 
 func watchEvents(path string) error {
+	// nolint:gosec // G304: path is trusted
 	file, err := os.Open(path)
 	if err != nil {
 		return err

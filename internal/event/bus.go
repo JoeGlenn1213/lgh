@@ -1,3 +1,4 @@
+// Package event implements the internal event bus and logging infrastructure.
 package event
 
 import (
@@ -41,6 +42,7 @@ func (b *Bus) publish(evt Event) {
 				if r := recover(); r != nil {
 					// In a real app we might log this panic
 					// fmt.Fprintf(os.Stderr, "Panic in event handler: %v\n", r)
+					_ = r // suppress unused var lint
 				}
 			}()
 			handler(evt)
@@ -48,7 +50,7 @@ func (b *Bus) publish(evt Event) {
 	}
 }
 
-// Lifecycle management
+// Closer is the interface for resources that need to be closed on shutdown
 type Closer interface {
 	Close() error
 }
