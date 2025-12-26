@@ -89,6 +89,21 @@ func runRepoStatus(_ *cobra.Command, _ []string) error {
 	ui.Info("📍 Local Path: %s", wd)
 	fmt.Println()
 
+	// Pre-fetch Branch & Upstream Info to determine active remote
+	head, err := git.GetDefaultBranch(wd) // This gets the current checked out branch/HEAD
+	if err != nil {
+		head = "unknown"
+	}
+	upstream, err := git.GetUpstream(wd, head)
+	var activeRemoteName string
+	if err == nil && upstream != "" {
+		// upstream is usually "remote/branch", e.g. "origin/main"
+		parts := strings.SplitN(upstream, "/", 2)
+		if len(parts) > 0 {
+			activeRemoteName = parts[0]
+		}
+	}
+
 	// 2. Remotes
 	ui.Info("🔗 Remotes:")
 	remotes, err := git.GetRemotes(wd)
@@ -99,11 +114,27 @@ func runRepoStatus(_ *cobra.Command, _ []string) error {
 		lghPortStr := fmt.Sprintf(":%d", cfg.Port)
 
 		for _, remote := range remotes {
-			// Check if this is likely an LGH remote
 			suffix := ""
-			if remote.Name == "lgh" || strings.Contains(remote.URL, "127.0.0.1"+lghPortStr) || strings.Contains(remote.URL, "localhost"+lghPortStr) {
-				suffix = ui.Green("   ✅ active (lgh)")
+
+			// Check if this is the active remote (based on upstream)
+			if activeRemoteName != "" && remote.Name == activeRemoteName {
+				suffix += ui.Green("   ✅ active")
 			}
+
+			// Determine if it's an LGH remote (for info purposes)
+			isLGH := remote.Name == "lgh" || strings.Contains(remote.URL, "127.0.0.1"+lghPortStr) || strings.Contains(remote.URL, "localhost"+lghPortStr)
+			if isLGH {
+				// Only add LGH tag if valid, and maybe distinct icon
+				// If it's already active, we don't need too much noise, but "lgh" name is self-explanatory.
+				// Let's add a small house icon if it's LGH but not "lgh" by name, or just to be cool.
+				// Actually, user was confused by "(lgh)" suffix attached to checkmark.
+				// Let's leave it clean. If remote.Name is "lgh", that's enough.
+				// If remote.Name is NOT "lgh" but points to localhost, maybe show it.
+				if remote.Name != "lgh" {
+					suffix += ui.Cyan("  (LGH)")
+				}
+			}
+
 			fmt.Printf("  - %-8s → %s%s\n", remote.Name, remote.URL, suffix)
 		}
 	}
@@ -111,17 +142,9 @@ func runRepoStatus(_ *cobra.Command, _ []string) error {
 
 	// 3. Branch Info
 	ui.Info("🌿 Branch:")
-
-	// Current HEAD
-	head, err := git.GetDefaultBranch(wd) // Reusing this function to get current branch
-	if err != nil {
-		head = "unknown"
-	}
 	fmt.Printf("  - HEAD        : %s\n", head)
 
-	// Upstream
-	upstream, err := git.GetUpstream(wd, head)
-	if err != nil {
+	if upstream == "" {
 		fmt.Printf("  - Upstream    : %s\n", ui.Gray("(none)"))
 	} else {
 		fmt.Printf("  - Upstream    : %s\n", upstream)
@@ -129,7 +152,6 @@ func runRepoStatus(_ *cobra.Command, _ []string) error {
 
 	// 4. LGH Default Branch (if registered)
 	reg := registry.New()
-	// Try to find by path first, then by name
 	var lghRepo *registry.RepoMapping
 	if existing, err := reg.FindBySourcePath(wd); err == nil {
 		lghRepo = existing
@@ -148,7 +170,8 @@ func runRepoStatus(_ *cobra.Command, _ []string) error {
 
 	// 5. Push Target Summary
 	if upstream != "" {
-		if strings.HasPrefix(upstream, "lgh/") {
+		// Highlight if pushing to LGH
+		if activeRemoteName == "lgh" {
 			ui.Success("🟢 Push target: %s", upstream)
 		} else {
 			ui.Info("⚪ Push target: %s", upstream)
