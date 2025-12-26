@@ -51,12 +51,9 @@ func (l *FileLogger) Handle(e Event) {
 	case l.queue <- e:
 		// success
 	default:
-		// Queue full. We must decide: block or drop?
-		// For an "observer", dropping is better than hanging the user's git push.
-		// However, 100 events buffer is large enough for normal use.
-		// Let's try to block for a short time, then drop?
-		// For MVP simplicity: just block. If disk is that slow, system is broken.
-		l.queue <- e
+		// Queue full. To ensure the critical path (git push) is never blocked,
+		// we drop the event. In a production system we'd metric this.
+		return
 	}
 }
 

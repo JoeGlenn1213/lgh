@@ -118,12 +118,14 @@ Git Commit: %s
 			eventDir := filepath.Join(cfg.DataDir, "events")
 			if logger, err := event.NewFileLogger(eventDir); err == nil {
 				event.Subscribe(logger.Handle)
+				event.RegisterCloser(logger)
 			}
 		}
 	}
 }
 
 func main() {
+	defer event.Shutdown()
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

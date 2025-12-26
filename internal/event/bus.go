@@ -47,3 +47,31 @@ func (b *Bus) publish(evt Event) {
 		}(h)
 	}
 }
+
+// Lifecycle management
+type Closer interface {
+	Close() error
+}
+
+var (
+	closers   []Closer
+	closersMu sync.Mutex
+)
+
+// RegisterCloser registers a resource that needs to be closed on shutdown
+func RegisterCloser(c Closer) {
+	closersMu.Lock()
+	defer closersMu.Unlock()
+	closers = append(closers, c)
+}
+
+// Shutdown closes all registered resources
+func Shutdown() {
+	closersMu.Lock()
+	defer closersMu.Unlock()
+
+	// Close in reverse order of registration
+	for i := len(closers) - 1; i >= 0; i-- {
+		_ = closers[i].Close()
+	}
+}
