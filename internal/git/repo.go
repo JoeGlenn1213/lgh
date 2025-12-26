@@ -69,6 +69,22 @@ func InitBareRepo(barePath string) error {
 	return nil
 }
 
+// InitRepo initializes a git repository at the specified path
+func InitRepo(repoPath string) error {
+	// Check if already a git repo
+	if IsGitRepo(repoPath) {
+		return nil // Already initialized
+	}
+
+	// Initialize repository
+	cmd := exec.Command("git", "init", repoPath)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("failed to init repo: %s, %w", string(output), err)
+	}
+
+	return nil
+}
+
 // AddRemote adds a remote to a git repository
 func AddRemote(repoPath, remoteName, remoteURL string) error {
 	// Verify it's a git repository

@@ -43,12 +43,13 @@ var (
 var addCmd = &cobra.Command{
 	Use:   "add [path]",
 	Short: "Add a local repository to LGH",
-	Long: `Add a local Git repository to LGH for HTTP hosting.
+	Long: `Add a local directory or Git repository to LGH for HTTP hosting.
 
 This command:
-  1. Creates a bare repository in ~/.localgithub/repos/
-  2. Adds a remote named 'lgh' to your local repository
-  3. Registers the mapping in mappings.yaml
+  1. Initializes a Git repository if the directory is not already one
+  2. Creates a bare repository in ~/.localgithub/repos/
+  3. Adds a remote named 'lgh' to your local repository
+  4. Registers the mapping in mappings.yaml
 
 If no path is specified, the current directory is used.
 
@@ -100,9 +101,13 @@ func runAdd(_ *cobra.Command, args []string) error {
 		return fmt.Errorf("path does not exist: %s", absPath)
 	}
 
-	// Check if it's a git repository
+	// Check if it's a git repository, if not, initialize it
 	if !git.IsGitRepo(absPath) {
-		return fmt.Errorf("not a git repository: %s", absPath)
+		ui.Info("Directory is not a Git repository, initializing...")
+		if err := git.InitRepo(absPath); err != nil {
+			return fmt.Errorf("failed to initialize git repository: %w", err)
+		}
+		ui.Success("Initialized Git repository at %s", absPath)
 	}
 
 	// Determine repository name

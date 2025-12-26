@@ -42,8 +42,12 @@ var statusCmd = &cobra.Command{
 Shows:
   • Server running status
   • Configuration details
-  • Number of registered repositories
-  • Health check result`,
+  • Registered repositories (with names for easy removal)
+  • Health check result
+  • Disk usage and server URLs
+
+Use 'lgh list' for more detailed repository information.
+Use 'lgh remove <name>' to remove a repository listed here.`,
 	RunE: runStatus,
 }
 
@@ -78,13 +82,18 @@ func runStatus(_ *cobra.Command, _ []string) error {
 	fmt.Printf("  %-15s %v\n", "mDNS Enabled:", cfg.MDNSEnabled)
 	fmt.Println()
 
-	// Repository count
+	// Repository count and list
 	reg := registry.New()
 	repos, err := reg.List()
 	if err != nil {
 		ui.Warning("Failed to load repositories: %v", err)
 	} else {
 		ui.Info("Repositories: %d registered", len(repos))
+		if len(repos) > 0 {
+			for _, repo := range repos {
+				fmt.Printf("  • %s\n", repo.Name)
+			}
+		}
 	}
 	fmt.Println()
 

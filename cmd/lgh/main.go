@@ -29,7 +29,7 @@ import (
 
 var (
 	// Version information
-	Version = "1.0.2"
+	Version = "1.0.3"
 	// BuildDate is the timestamp when the binary was built
 	BuildDate = "unknown"
 	// GitCommit is the commit hash of the build
@@ -45,17 +45,30 @@ var rootCmd = &cobra.Command{
 It provides a simple way to host Git repositories locally via HTTP,
 similar to GitHub but running entirely on your machine.
 
-Features:
+FEATURES:
   • HTTP Git hosting via git-http-backend
-  • Simple CLI for managing repositories
+  • Daemon mode for background operation
+  • Built-in authentication for secure sharing
   • mDNS discovery for LAN access
   • Easy tunnel integration for remote access
 
-Quick Start:
-  1. lgh init          Initialize LGH environment
-  2. lgh serve         Start the HTTP server
-  3. lgh add .         Add current directory as a repository
-  4. git push lgh main Push to your local GitHub!
+QUICK START:
+  $ lgh init              # Initialize LGH environment
+  $ lgh serve -d          # Start server in background
+  $ lgh add .             # Add current directory as a repo
+  $ git push lgh main     # Push to your local GitHub!
+
+SERVER MANAGEMENT:
+  $ lgh serve             # Start in foreground
+  $ lgh serve -d          # Start in background (daemon)
+  $ lgh status            # Check server status
+  $ lgh stop              # Stop the server
+
+COMMON OPTIONS:
+  $ lgh serve --port 8080       # Use custom port
+  $ lgh serve --bind 0.0.0.0    # Allow LAN access
+  $ lgh serve --read-only       # Disable push
+  $ lgh auth setup              # Enable authentication
 
 For more information, visit: https://github.com/JoeGlenn1213/lgh`,
 	Version: Version,

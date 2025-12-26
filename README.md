@@ -30,21 +30,21 @@ Download the pre-built binary for your system:
 
 | OS | Architecture | Download |
 |------|------|------|
-| macOS | Apple Silicon (M1/M2/M3) | [lgh-1.0.2-darwin-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.2/lgh-1.0.2-darwin-arm64) |
-| macOS | Intel | [lgh-1.0.2-darwin-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.2/lgh-1.0.2-darwin-amd64) |
-| Linux | x86_64 | [lgh-1.0.2-linux-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.2/lgh-1.0.2-linux-amd64) |
-| Linux | ARM64 | [lgh-1.0.2-linux-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.2/lgh-1.0.2-linux-arm64) |
-| Windows | x86_64 | [lgh-1.0.2-windows-amd64.exe](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.2/lgh-1.0.2-windows-amd64.exe) |
+| macOS | Apple Silicon (M1/M2/M3) | [lgh-1.0.3-darwin-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.3/lgh-1.0.3-darwin-arm64) |
+| macOS | Intel | [lgh-1.0.3-darwin-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.3/lgh-1.0.3-darwin-amd64) |
+| Linux | x86_64 | [lgh-1.0.3-linux-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.3/lgh-1.0.3-linux-amd64) |
+| Linux | ARM64 | [lgh-1.0.3-linux-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.3/lgh-1.0.3-linux-arm64) |
+| Windows | x86_64 | [lgh-1.0.3-windows-amd64.exe](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.3/lgh-1.0.3-windows-amd64.exe) |
 
 ```bash
 # Install after download (macOS ARM64 example)
-chmod +x lgh-1.0.2-darwin-arm64
-sudo mv lgh-1.0.2-darwin-arm64 /usr/local/bin/lgh
+chmod +x lgh-1.0.3-darwin-arm64
+sudo mv lgh-1.0.3-darwin-arm64 /usr/local/bin/lgh
 ```
 
 #### Windows Installation
 
-1. Download `lgh-1.0.2-windows-amd64.exe`
+1. Download `lgh-1.0.3-windows-amd64.exe`
 2. Rename to `lgh.exe`
 3. Move to a folder in your `%PATH%` (e.g., `C:\Program Files\lgh\`)
 4. Run in PowerShell or Command Prompt
@@ -154,9 +154,9 @@ git clone http://127.0.0.1:9418/your-project.git
 | `lgh serve` | Start HTTP server | `lgh serve -d` |
 | `lgh stop` | Stop running server | `lgh stop` |
 | `lgh add` | Add repository to LGH | `lgh add . --name my-repo` |
-| `lgh list` | List all repositories | `lgh list` |
-| `lgh status` | View server status | `lgh status` |
-| `lgh remove` | Remove repository | `lgh remove my-repo` |
+| `lgh list` | List all repositories (detailed) | `lgh list` |
+| `lgh status` | View server status and repo list | `lgh status` |
+| `lgh remove` | Remove repository (use status/list first) | `lgh remove my-repo` |
 | `lgh tunnel` | Expose to internet | `lgh tunnel --method ngrok` |
 | `lgh auth` | Manage authentication | `lgh auth setup` |
 | `lgh -v` | Show version | `lgh -v` |
@@ -322,6 +322,21 @@ lgh auth setup
 lgh tunnel --method ngrok &
 # Use ngrok URL + credentials
 ```
+
+## ⚖️ Comparison with Other Solutions
+
+| Feature | LGH | GitLab | Gitea | git daemon | File Sharing |
+|---------|-----|--------|-------|------------|--------------|
+| Setup Complexity | ⭐ Single binary | ❌ Needs database | ⚠️ Needs config | ⭐ Simple | ⭐ No install |
+| HTTP Protocol | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Authentication | ✅ Optional | ✅ Required | ✅ Required | ❌ | ❌ |
+| Web UI | ❌ | ✅ | ✅ | ❌ | ❌ |
+| Resource Usage | ⭐ <10MB | ❌ >1GB | ⚠️ ~100MB | ⭐ <5MB | ⭐ None |
+| Startup Time | ⭐ <1s | ❌ >30s | ⚠️ ~10s | ⭐ <1s | ⭐ Instant |
+| LAN Discovery | ✅ mDNS | ❌ | ❌ | ❌ | ✅ |
+| Use Case | Local/Temp | Enterprise | Team | Simple share | File transfer |
+
+**LGH's Position**: Fills the gap between "simple file sharing" and "full Git platform".
 
 ## 🧪 Testing
 

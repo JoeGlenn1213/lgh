@@ -30,21 +30,21 @@
 
 | 系统 | 架构 | 下载 |
 |------|------|------|
-| macOS | Apple Silicon (M1/M2/M3) | [lgh-1.0.2-darwin-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.2/lgh-1.0.2-darwin-arm64) |
-| macOS | Intel | [lgh-1.0.2-darwin-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.2/lgh-1.0.2-darwin-amd64) |
-| Linux | x86_64 | [lgh-1.0.2-linux-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.2/lgh-1.0.2-linux-amd64) |
-| Linux | ARM64 | [lgh-1.0.2-linux-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.2/lgh-1.0.2-linux-arm64) |
-| Windows | x86_64 | [lgh-1.0.2-windows-amd64.exe](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.2/lgh-1.0.2-windows-amd64.exe) |
+| macOS | Apple Silicon (M1/M2/M3) | [lgh-1.0.3-darwin-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.3/lgh-1.0.3-darwin-arm64) |
+| macOS | Intel | [lgh-1.0.3-darwin-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.3/lgh-1.0.3-darwin-amd64) |
+| Linux | x86_64 | [lgh-1.0.3-linux-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.3/lgh-1.0.3-linux-amd64) |
+| Linux | ARM64 | [lgh-1.0.3-linux-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.3/lgh-1.0.3-linux-arm64) |
+| Windows | x86_64 | [lgh-1.0.3-windows-amd64.exe](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.3/lgh-1.0.3-windows-amd64.exe) |
 
 ```bash
 # 下载后安装（以 macOS ARM64 为例）
-chmod +x lgh-1.0.2-darwin-arm64
-sudo mv lgh-1.0.2-darwin-arm64 /usr/local/bin/lgh
+chmod +x lgh-1.0.3-darwin-arm64
+sudo mv lgh-1.0.3-darwin-arm64 /usr/local/bin/lgh
 ```
 
 #### Windows 安装
 
-1. 下载 `lgh-1.0.2-windows-amd64.exe`
+1. 下载 `lgh-1.0.3-windows-amd64.exe`
 2. 重命名为 `lgh.exe`
 3. 移动到系统 `%PATH%` 路径下的文件夹中 (例如 `C:\Program Files\lgh\`)
 4. 在 PowerShell 或 CMD 中运行
@@ -154,9 +154,9 @@ git clone http://127.0.0.1:9418/your-project.git
 | `lgh serve` | 启动 HTTP 服务器 | `lgh serve -d` |
 | `lgh stop` | 停止服务器 | `lgh stop` |
 | `lgh add` | 添加仓库到 LGH | `lgh add . --name my-repo` |
-| `lgh list` | 列出所有仓库 | `lgh list` |
-| `lgh status` | 查看服务状态 | `lgh status` |
-| `lgh remove` | 移除仓库 | `lgh remove my-repo` |
+| `lgh list` | 列出所有仓库（详细信息） | `lgh list` |
+| `lgh status` | 查看服务状态和仓库列表 | `lgh status` |
+| `lgh remove` | 移除仓库（先用 status 或 list 查看名称） | `lgh remove my-repo` |
 | `lgh tunnel` | 暴露到外网 | `lgh tunnel --method ngrok` |
 | `lgh auth` | 管理认证设置 | `lgh auth setup` |
 | `lgh -v` | 显示版本 | `lgh -v` |
@@ -322,6 +322,21 @@ lgh auth setup
 lgh tunnel --method ngrok &
 # 使用 ngrok URL + 凭据
 ```
+
+## ⚖️ 与其他方案对比
+
+| 特性 | LGH | GitLab | Gitea | git daemon | 文件共享 |
+|------|-----|--------|-------|------------|----------|
+| 安装复杂度 | ⭐ 单文件 | ❌ 需要数据库 | ⚠️ 需要配置 | ⭐ 简单 | ⭐ 无需安装 |
+| HTTP 协议 | ✅ | ✅ | ✅ | ❌ | ❌ |
+| 身份验证 | ✅ 可选 | ✅ 必须 | ✅ 必须 | ❌ | ❌ |
+| Web UI | ❌ | ✅ | ✅ | ❌ | ❌ |
+| 资源占用 | ⭐ <10MB | ❌ >1GB | ⚠️ ~100MB | ⭐ <5MB | ⭐ 无 |
+| 启动速度 | ⭐ <1s | ❌ >30s | ⚠️ ~10s | ⭐ <1s | ⭐ 即时 |
+| 局域网发现 | ✅ mDNS | ❌ | ❌ | ❌ | ✅ |
+| 适用场景 | 本地/临时 | 企业级 | 团队级 | 简单共享 | 文件传输 |
+
+**LGH 的定位**：填补"简单文件共享"和"完整 Git 平台"之间的空白。
 
 ## 🧪 测试
 
