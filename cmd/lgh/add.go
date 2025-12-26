@@ -148,7 +148,9 @@ func runAdd(_ *cobra.Command, args []string) error {
 	ui.Success("Created %s", barePath)
 
 	// Build the remote URL
-	remoteURL := fmt.Sprintf("http://%s:%d/%s", cfg.BindAddress, cfg.Port, bareRepoName)
+	// v1.0.6: Use strict virtual owner 'lgh' for compatibility
+	// http://localhost:PORT/lgh/repo.git
+	remoteURL := fmt.Sprintf("http://%s:%d/lgh/%s", cfg.BindAddress, cfg.Port, bareRepoName)
 
 	// Add remote to source repository
 	if !noRemote {

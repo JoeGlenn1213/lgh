@@ -18,7 +18,12 @@
 - **Reliability**: Graceful shutdown ensures all events are logged.
 - **Documentation**: Comprehensive README rewrite covering all v1.0.5 features and security guidelines.
 
-## v1.0.4 (2025-12-26)
+## v1.0.6 (2025-12-26)
+
+### New Features
+- **Routing**: Added **Virtual Owner Support**. LGH now explicitly supports URLs in the format `http://host/lgh/:repo.git` to satisfy tool requirements for `owner/repo` structure (e.g. Cursor, Terraform). The `/lgh/` prefix is automatically routed to the correct local repository. Note: Only `/lgh/` is supported as a virtual owner for security and consistency.
+
+## v1.0.5 (2025-12-26)
 
 ## ✅ 新功能 (v1.0.4)
 

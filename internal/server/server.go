@@ -63,6 +63,9 @@ func (s *Server) Start() error {
 	// Build handler chain
 	var handler = gitHandler
 
+	// Add virtual owner middleware (to support /owner/repo.git paths)
+	handler = s.virtualOwnerMiddleware(handler)
+
 	// Add logging middleware
 	handler = s.loggingMiddleware(handler)
 
@@ -254,4 +257,41 @@ func IsRunning() (bool, int) {
 func GetServerURL() string {
 	cfg := config.Get()
 	return fmt.Sprintf("http://%s:%d", cfg.BindAddress, cfg.Port)
+}
+
+// virtualOwnerMiddleware strips the first path segment if it looks like an owner
+// e.g. /owner/repo.git -> /repo.git
+// This allows tools that strictly enforce owner/repo structure to work with flat LGH repos.
+func (s *Server) virtualOwnerMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		if path == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
+
+		// Find segment ending in .git
+		gitIdx := -1
+		for i, p := range parts {
+			if strings.HasSuffix(p, ".git") {
+				gitIdx = i
+				break
+			}
+		}
+
+		// If .git is the second segment (index 1), and index 0 is "lgh"
+		// We strict this to "lgh" to avoid security confusion or arbitrary path support.
+		if gitIdx == 1 && parts[0] == "lgh" {
+			// Reconstruct path starting from repo name
+			// /lgh/repo.git/info/refs -> /repo.git/info/refs
+			newPath := "/" + strings.Join(parts[1:], "/")
+
+			// We modify the request path context effectively
+			r.URL.Path = newPath
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

@@ -92,7 +92,7 @@ func runList(_ *cobra.Command, _ []string) error {
 		}
 
 		// Build clone URL
-		cloneURL := fmt.Sprintf("%s/%s.git", baseURL, repo.Name)
+		cloneURL := fmt.Sprintf("%s/lgh/%s.git", baseURL, repo.Name)
 		if !serverRunning {
 			cloneURL = ui.Gray("(server offline)")
 		}
