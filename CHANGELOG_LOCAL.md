@@ -1,6 +1,17 @@
 # LGH v1.0.4 发布准备
 
 **日期**: 2025-12-26
+## v1.0.5 (Unreleased)
+
+### New Features
+- **Event System**: Introduced internal event bus and logging infrastructure.
+- **lgh events**: New command to view system activity logs (repo push, add, remove).
+- **Git Push Tracking**: Server now explicitly captures push operations and logs reference changes with Commit IDs.
+
+### Fixes
+- **UI**: `lgh repo status` now correctly identifies the active remote based on upstream configuration.
+
+## v1.0.4 (2025-12-26)
 
 ## ✅ 新功能 (v1.0.4)
 

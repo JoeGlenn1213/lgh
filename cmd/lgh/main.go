@@ -23,8 +23,12 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
+
+	"github.com/JoeGlenn1213/lgh/internal/config"
+	"github.com/JoeGlenn1213/lgh/internal/event"
 )
 
 var (
@@ -99,7 +103,25 @@ Git Commit: %s
 	rootCmd.AddCommand(repoCmd)
 	rootCmd.AddCommand(remoteCmd)
 	rootCmd.AddCommand(cloneCmd)
+	rootCmd.AddCommand(cloneCmd)
 	rootCmd.AddCommand(doctorCmd)
+
+	// New in v1.0.5
+	rootCmd.AddCommand(eventsCmd)
+
+	// Initialize Event System
+	rootCmd.PersistentPreRun = func(cmd *cobra.Command, args []string) {
+		// Try to load config to get DataDir
+		// If fails (e.g. before lgh init), we simply skip event logging
+		if _, err := config.Load(); err == nil {
+			cfg := config.Get()
+			// Logs go to ~/.localgithub/events/events.jsonl
+			eventDir := filepath.Join(cfg.DataDir, "events")
+			if logger, err := event.NewFileLogger(eventDir); err == nil {
+				event.Subscribe(logger.Handle)
+			}
+		}
+	}
 }
 
 func main() {

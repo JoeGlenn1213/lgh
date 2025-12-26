@@ -29,6 +29,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/JoeGlenn1213/lgh/internal/config"
+	"github.com/JoeGlenn1213/lgh/internal/event"
 	"github.com/JoeGlenn1213/lgh/internal/git"
 	"github.com/JoeGlenn1213/lgh/internal/registry"
 	"github.com/JoeGlenn1213/lgh/pkg/ui"
@@ -176,6 +177,12 @@ func runRemove(_ *cobra.Command, args []string) error {
 
 	fmt.Println()
 	ui.Success("Repository '%s' removed successfully!", name)
+
+	// Publish Event
+	event.Publish(event.RepoRemoved, name, map[string]interface{}{
+		"source": repo.SourcePath,
+		"bare":   repo.BarePath,
+	})
 	fmt.Println()
 
 	return nil

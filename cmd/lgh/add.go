@@ -29,6 +29,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/JoeGlenn1213/lgh/internal/config"
+	"github.com/JoeGlenn1213/lgh/internal/event"
 	"github.com/JoeGlenn1213/lgh/internal/git"
 	"github.com/JoeGlenn1213/lgh/internal/registry"
 	"github.com/JoeGlenn1213/lgh/internal/server"
@@ -172,6 +173,13 @@ func runAdd(_ *cobra.Command, args []string) error {
 	// Print success and next steps
 	fmt.Println()
 	ui.Success("Repository '%s' added successfully!", name)
+
+	// Publish Event
+	event.Publish(event.RepoAdded, name, map[string]interface{}{
+		"source": absPath,
+		"bare":   barePath,
+		"url":    remoteURL,
+	})
 	fmt.Println()
 
 	// Check if server is running

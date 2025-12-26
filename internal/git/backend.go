@@ -34,6 +34,7 @@ import (
 	"strings"
 
 	"github.com/JoeGlenn1213/lgh/internal/config"
+	"github.com/JoeGlenn1213/lgh/internal/event"
 )
 
 // Backend handles Git HTTP backend requests
@@ -126,10 +127,47 @@ func (b *Backend) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	originalPath := r.URL.Path
 	r.URL.Path = "/" + repoPath + gitPath
 
+	// Pre-push: capture refs
+	isPush := b.isPushRequest(r, gitPath)
+	var preRefs map[string]string
+	if isPush {
+		preRefs, _ = GetRefs(fullRepoPath)
+	}
+
 	handler.ServeHTTP(w, r)
 
 	// Restore original path
 	r.URL.Path = originalPath
+
+	// Post-push: compare refs and emit event
+	if isPush {
+		postRefs, _ := GetRefs(fullRepoPath)
+
+		changes := make(map[string]map[string]string)
+		zeroHash := "0000000000000000000000000000000000000000"
+
+		// Created or Updated
+		for ref, newHash := range postRefs {
+			if oldHash, exists := preRefs[ref]; !exists {
+				changes[ref] = map[string]string{"old": zeroHash, "new": newHash, "action": "created"}
+			} else if oldHash != newHash {
+				changes[ref] = map[string]string{"old": oldHash, "new": newHash, "action": "updated"}
+			}
+		}
+
+		// Deleted
+		for ref, oldHash := range preRefs {
+			if _, exists := postRefs[ref]; !exists {
+				changes[ref] = map[string]string{"old": oldHash, "new": zeroHash, "action": "deleted"}
+			}
+		}
+
+		if len(changes) > 0 {
+			event.Publish(event.GitPush, repoPath, map[string]interface{}{
+				"changes": changes,
+			})
+		}
+	}
 }
 
 // parseRequest extracts the repository name and git path from the request

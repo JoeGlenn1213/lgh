@@ -6,6 +6,7 @@ toolchain go1.23.4
 
 require (
 	github.com/fatih/color v1.18.0
+	github.com/google/uuid v1.6.0
 	github.com/hashicorp/mdns v1.0.5
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.20.1
