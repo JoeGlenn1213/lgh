@@ -18,6 +18,13 @@
 - **Reliability**: Graceful shutdown ensures all events are logged.
 - **Documentation**: Comprehensive README rewrite covering all v1.0.5 features and security guidelines.
 
+## v1.0.8 (2025-12-26)
+
+### Improvements
+- **Workflow**: `lgh add --push` now defaults to pushing `HEAD` (safer than guessing branch name).
+- **UX**: Suppressed duplicate/confusing manual push instructions when auto-push is active.
+- **Fixes**: Cleaned up internal instruction logic.
+
 ## v1.0.7 (2025-12-26)
 
 ### New Features

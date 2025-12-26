@@ -60,8 +60,6 @@ Examples:
   lgh add                      # Add current directory
   lgh add ./my-project         # Add specific path
   lgh add . --name my-app      # Add with custom name
-  lgh add ./my-project         # Add specific path
-  lgh add . --name my-app      # Add with custom name
   lgh add . --no-remote        # Don't add remote to source repo
   lgh add . --push             # Auto-push current branch to LGH
   lgh add . --push-branch main # Auto-push specific branch`,
@@ -193,65 +191,47 @@ func runAdd(_ *cobra.Command, args []string) error {
 	fmt.Println()
 
 	// Check if server is running
-	if running, _ := server.IsRunning(); running {
+	serverRunning, _ := server.IsRunning()
+	if serverRunning {
 		ui.Info("Clone URL: %s", ui.URL(remoteURL))
 		fmt.Println()
-		ui.Info("Push your code:")
-		ui.Command("git push lgh main")
 	}
 
 	// Auto Push
 	if autoPush || pushBranch != "" {
-		// Determine branch to push
 		branchToPush := pushBranch
 		if branchToPush == "" {
-			// Get current HEAD
-			currentBranch, err := git.GetDefaultBranch(absPath)
-			if err != nil {
-				ui.Warning("Failed to determine current branch: %v", err)
-			} else {
-				branchToPush = currentBranch
-			}
+			branchToPush = "HEAD"
 		}
 
-		if branchToPush != "" {
-			ui.Info("Using auto-push for branch '%s'...", branchToPush)
-			// Check if server running first? Push happens via git CLI, so it needs server running OR direct access?
-			// Since remote is HTTP URL, it NEEDS server running.
+		ui.Info("Using auto-push for branch '%s'...", branchToPush)
 
-			if running, _ := server.IsRunning(); !running {
-				ui.Warning("Cannot auto-push: Server is not running! Start with 'lgh serve'")
-			} else {
-				if err := git.PushToRemoteUpstream(absPath, "lgh", branchToPush); err != nil {
-					ui.Warning("Failed to push to lgh: %v", err)
-					ui.Info("Try pushing manually: git push -u lgh %s", branchToPush)
-				} else {
-					ui.Success("Successfully pushed '%s' to lgh!", branchToPush)
-				}
-			}
+		if !serverRunning {
+			ui.Warning("Cannot auto-push: Server is not running! Start with 'lgh serve'")
 		} else {
-			ui.Warning("Skipping auto-push: could not determine branch name.")
+			if err := git.PushToRemoteUpstream(absPath, "lgh", branchToPush); err != nil {
+				ui.Warning("Failed to push to lgh: %v", err)
+				ui.Info("Try pushing manually: git push -u lgh HEAD")
+			} else {
+				ui.Success("Successfully pushed code to lgh!")
+			}
 		}
-	}
-
-	if !autoPush && pushBranch == "" {
-		// Original instruction logic
-		if running, _ := server.IsRunning(); !running {
+	} else {
+		// Manual Instructions
+		if !serverRunning {
 			ui.Warning("Server is not running!")
 			ui.Info("Start the server first:")
 			ui.Command("lgh serve")
 			fmt.Println()
 			ui.Info("Then push your code:")
-			ui.Command("git push lgh main")
+			ui.Command("git push -u lgh HEAD")
 		} else {
-			fmt.Println()
 			ui.Info("Push your code:")
-			ui.Command("git push lgh main")
+			ui.Command("git push -u lgh HEAD")
 		}
 	}
 
 	fmt.Println()
 
 	return nil
-
 }
