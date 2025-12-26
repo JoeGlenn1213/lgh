@@ -332,3 +332,26 @@ func GetUpstream(repoPath, branch string) (string, error) {
 	}
 	return strings.TrimSpace(string(output)), nil
 }
+
+// HasCommits checks if the repository has any commits
+func HasCommits(repoPath string) bool {
+	// Check if HEAD resolves to a commit
+	cmd := exec.Command("git", "-C", repoPath, "rev-parse", "HEAD")
+	return cmd.Run() == nil
+}
+
+// CommitChanges adds all changes and commits them
+func CommitChanges(repoPath, msg string) error {
+	// git add .
+	addCmd := exec.Command("git", "-C", repoPath, "add", ".")
+	if out, err := addCmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("failed to add files: %s, %w", string(out), err)
+	}
+
+	// git commit -m msg
+	commitCmd := exec.Command("git", "-C", repoPath, "commit", "-m", msg)
+	if out, err := commitCmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("failed to commit: %s, %w", string(out), err)
+	}
+	return nil
+}

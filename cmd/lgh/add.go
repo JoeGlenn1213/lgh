@@ -117,6 +117,16 @@ func runAdd(_ *cobra.Command, args []string) error {
 		ui.Success("Initialized Git repository at %s", absPath)
 	}
 
+	// Auto-Commit if enabled and empty
+	if (autoPush || pushBranch != "") && !git.HasCommits(absPath) {
+		ui.Info("Repository has no commits. Auto-committing all files...")
+		if err := git.CommitChanges(absPath, "Initial commit by LGH"); err != nil {
+			ui.Warning("Auto-commit failed: %v", err)
+		} else {
+			ui.Success("Created initial commit.")
+		}
+	}
+
 	// Determine repository name
 	name := repoName
 	if name == "" {

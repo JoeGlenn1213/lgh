@@ -18,6 +18,14 @@
 - **Reliability**: Graceful shutdown ensures all events are logged.
 - **Documentation**: Comprehensive README rewrite covering all v1.0.5 features and security guidelines.
 
+## v1.0.9 (2025-12-26)
+
+### New Features
+- **One-Step Setup**: `lgh add . --push` now handles **everything**.
+  - If the directory has no commits (or is fresh), it automatically performs `git add .` and `git commit -m "Initial commit by LGH"`.
+  - Turns a folder of files into a hosted global repo in literally one command.
+  - Warns if `.gitignore` might be missing (implicit warning via git output).
+
 ## v1.0.8 (2025-12-26)
 
 ### Improvements
