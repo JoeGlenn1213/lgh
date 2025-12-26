@@ -160,6 +160,42 @@ git clone http://127.0.0.1:9418/your-project.git
 | `lgh tunnel` | Expose to internet | `lgh tunnel --method ngrok` |
 | `lgh auth` | Manage authentication | `lgh auth setup` |
 | `lgh -v` | Show version | `lgh -v` |
+| `lgh doctor` | Check system health | `lgh doctor` |
+| `lgh repo status` | Check repo connection state | `lgh repo status` |
+| `lgh remote use` | Switch active remote | `lgh remote use lgh` |
+| `lgh clone` | Simple clone from LGH | `lgh clone repo-name` |
+
+### Repository Management (v1.0.4+)
+
+LGH provides tools to manage your local repository state without complex git commands.
+
+#### Check Connection State
+See exactly which remote you are pushing to:
+```bash
+lgh repo status
+```
+
+#### Switch Remote
+Easily switch between LGH and origin (e.g., GitHub):
+```bash
+lgh remote use lgh      # Switch upstream to LGH
+lgh remote use origin   # Switch upstream to Origin
+```
+
+#### Other Tools
+```bash
+# Clone easily (no full URL needed)
+lgh clone my-project
+
+# Inspect bare repo details (HEAD, branches)
+lgh repo inspect my-project
+
+# Set default branch for bare repo
+lgh repo set-default my-project main
+
+# Check system health
+lgh doctor
+```
 
 ### Server Options
 

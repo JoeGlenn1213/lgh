@@ -160,6 +160,42 @@ git clone http://127.0.0.1:9418/your-project.git
 | `lgh tunnel` | 暴露到外网 | `lgh tunnel --method ngrok` |
 | `lgh auth` | 管理认证设置 | `lgh auth setup` |
 | `lgh -v` | 显示版本 | `lgh -v` |
+| `lgh doctor` | 检查系统健康状况 | `lgh doctor` |
+| `lgh repo status` | 查看仓库连接状态 | `lgh repo status` |
+| `lgh remote use` | 切换当前使用的远程 | `lgh remote use lgh` |
+| `lgh clone` | 快速克隆 | `lgh clone repo-name` |
+
+### 仓库管理工具 (v1.0.4+)
+
+LGH 提供了一套工具来管理本地仓库状态，无需复杂的 git 命令。
+
+#### 查看连接状态
+一眼看清当前分支连接的是哪个远程服务：
+```bash
+lgh repo status
+```
+
+#### 切换远程
+在 LGH 和 origin (如 GitHub) 之间快速切换：
+```bash
+lgh remote use lgh      # 切换上游到 LGH
+lgh remote use origin   # 切换上游到 Origin
+```
+
+#### 其他实用工具
+```bash
+# 快速克隆 (无需完整 URL)
+lgh clone my-project
+
+# 检查裸仓详情 (HEAD, 分支等)
+lgh repo inspect my-project
+
+# 设置裸仓默认分支
+lgh repo set-default my-project main
+
+# 系统自检
+lgh doctor
+```
 
 ### 服务器选项
 

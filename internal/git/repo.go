@@ -28,6 +28,20 @@ import (
 	"strings"
 )
 
+// Remote represents a git remote
+type Remote struct {
+	Name string
+	URL  string
+}
+
+// CommitInfo represents basic commit information
+type CommitInfo struct {
+	Hash   string
+	Author string
+	Date   string
+	Msg    string
+}
+
 // CheckGitInstalled checks if git is installed and returns its path
 func CheckGitInstalled() (string, error) {
 	path, err := exec.LookPath("git")
@@ -210,4 +224,98 @@ func PushToRemote(repoPath, remoteName, branch string) error {
 		return fmt.Errorf("failed to push: %s, %w", string(output), err)
 	}
 	return nil
+}
+
+// GetRemotes returns a list of all remotes
+func GetRemotes(repoPath string) ([]Remote, error) {
+	cmd := exec.Command("git", "-C", repoPath, "remote", "-v")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to list remotes: %w", err)
+	}
+
+	lines := strings.Split(string(output), "\n")
+	remoteMap := make(map[string]string)
+
+	for _, line := range lines {
+		parts := strings.Fields(line)
+		if len(parts) >= 2 {
+			// parts[0] is name, parts[1] is url
+			remoteMap[parts[0]] = parts[1]
+		}
+	}
+
+	var remotes []Remote
+	for name, url := range remoteMap {
+		remotes = append(remotes, Remote{Name: name, URL: url})
+	}
+	return remotes, nil
+}
+
+// GetBranches returns a list of branches
+func GetBranches(repoPath string) ([]string, error) {
+	cmd := exec.Command("git", "-C", repoPath, "branch", "--format=%(refname:short)")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to list branches: %w", err)
+	}
+
+	var branches []string
+	for _, line := range strings.Split(strings.TrimSpace(string(output)), "\n") {
+		if line != "" {
+			branches = append(branches, line)
+		}
+	}
+	return branches, nil
+}
+
+// GetLastCommit returns info about the last commit on a branch
+func GetLastCommit(repoPath, branch string) (*CommitInfo, error) {
+	// Format: hash|author|date|msg
+	format := "%h|%an|%ar|%s"
+	cmd := exec.Command("git", "-C", repoPath, "log", "-1", fmt.Sprintf("--format=%s", format), branch)
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get log: %w", err)
+	}
+
+	parts := strings.Split(strings.TrimSpace(string(output)), "|")
+	if len(parts) < 4 {
+		return nil, fmt.Errorf("invalid log format")
+	}
+
+	return &CommitInfo{
+		Hash:   parts[0],
+		Author: parts[1],
+		Date:   parts[2],
+		Msg:    parts[3],
+	}, nil
+}
+
+// SetHead sets the HEAD symbolic ref (for default branch)
+func SetHead(repoPath, branch string) error {
+	cmd := exec.Command("git", "-C", repoPath, "symbolic-ref", "HEAD", "refs/heads/"+branch)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("failed to set HEAD: %s, %w", string(output), err)
+	}
+	return nil
+}
+
+// SetUpstream sets the upstream for a branch
+func SetUpstream(repoPath, branch, remote, remoteBranch string) error {
+	cmd := exec.Command("git", "-C", repoPath, "branch", "--set-upstream-to="+remote+"/"+remoteBranch, branch)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("failed to set upstream: %s, %w", string(output), err)
+	}
+	return nil
+}
+
+// GetUpstream gets the upstream for a branch (returns "remote/branch")
+func GetUpstream(repoPath, branch string) (string, error) {
+	cmd := exec.Command("git", "-C", repoPath, "rev-parse", "--abbrev-ref", branch+"@{upstream}")
+	output, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("no upstream configured")
+	}
+	return strings.TrimSpace(string(output)), nil
 }

@@ -59,6 +59,11 @@ func Success(format string, args ...interface{}) {
 	fmt.Printf("%s %s\n", greenBold("✓"), msg)
 }
 
+// SuccessString returns a success message as string with checkmark
+func SuccessString(msg string) string {
+	return fmt.Sprintf("%s %s", greenBold("✓"), msg)
+}
+
 // Error prints an error message
 func Error(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)

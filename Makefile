@@ -1,7 +1,7 @@
 # LGH Makefile
 # Build, test, and release automation
 
-VERSION ?= 1.0.3
+VERSION ?= 1.0.4
 BUILD_DATE := $(shell date +%Y-%m-%d)
 GIT_COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 LDFLAGS := -s -w -X main.Version=$(VERSION) -X main.BuildDate=$(BUILD_DATE) -X main.GitCommit=$(GIT_COMMIT)

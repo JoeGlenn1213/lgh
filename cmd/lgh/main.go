@@ -29,7 +29,7 @@ import (
 
 var (
 	// Version information
-	Version = "1.0.3"
+	Version = "1.0.4"
 	// BuildDate is the timestamp when the binary was built
 	BuildDate = "unknown"
 	// GitCommit is the commit hash of the build
@@ -94,6 +94,12 @@ Git Commit: %s
 	rootCmd.AddCommand(removeCmd)
 	rootCmd.AddCommand(tunnelCmd)
 	rootCmd.AddCommand(authCmd)
+
+	// New in v1.0.4
+	rootCmd.AddCommand(repoCmd)
+	rootCmd.AddCommand(remoteCmd)
+	rootCmd.AddCommand(cloneCmd)
+	rootCmd.AddCommand(doctorCmd)
 }
 
 func main() {
