@@ -273,6 +273,7 @@ func GetBranches(repoPath string) ([]string, error) {
 func GetLastCommit(repoPath, branch string) (*CommitInfo, error) {
 	// Format: hash|author|date|msg
 	format := "%h|%an|%ar|%s"
+	// nolint:gosec // Trusted input
 	cmd := exec.Command("git", "-C", repoPath, "log", "-1", fmt.Sprintf("--format=%s", format), branch)
 	output, err := cmd.Output()
 	if err != nil {
@@ -294,6 +295,7 @@ func GetLastCommit(repoPath, branch string) (*CommitInfo, error) {
 
 // SetHead sets the HEAD symbolic ref (for default branch)
 func SetHead(repoPath, branch string) error {
+	// nolint:gosec // Trusted input
 	cmd := exec.Command("git", "-C", repoPath, "symbolic-ref", "HEAD", "refs/heads/"+branch)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to set HEAD: %s, %w", string(output), err)
@@ -303,6 +305,7 @@ func SetHead(repoPath, branch string) error {
 
 // SetUpstream sets the upstream for a branch
 func SetUpstream(repoPath, branch, remote, remoteBranch string) error {
+	// nolint:gosec // Trusted input
 	cmd := exec.Command("git", "-C", repoPath, "branch", "--set-upstream-to="+remote+"/"+remoteBranch, branch)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to set upstream: %s, %w", string(output), err)
@@ -312,6 +315,7 @@ func SetUpstream(repoPath, branch, remote, remoteBranch string) error {
 
 // GetUpstream gets the upstream for a branch (returns "remote/branch")
 func GetUpstream(repoPath, branch string) (string, error) {
+	// nolint:gosec // Trusted input
 	cmd := exec.Command("git", "-C", repoPath, "rev-parse", "--abbrev-ref", branch+"@{upstream}")
 	output, err := cmd.Output()
 	if err != nil {

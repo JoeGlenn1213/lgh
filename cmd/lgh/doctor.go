@@ -67,15 +67,15 @@ func runDoctor(_ *cobra.Command, _ []string) error {
 
 	// 2. Check Configuration
 	ui.Info("Checking Configuration...")
-	if _, err := config.Load(); err != nil {
-		ui.Warning("! Configuration load warning: %v", err)
+	if _, loadErr := config.Load(); loadErr != nil {
+		ui.Warning("! Configuration load warning: %v", loadErr)
 		// Try to continue
 	}
 	cfg := config.Get()
 
 	// Check Data Dir
-	if info, err := os.Stat(cfg.DataDir); err != nil {
-		ui.Error("✗ Data directory issue: %v", err)
+	if info, statErr := os.Stat(cfg.DataDir); statErr != nil {
+		ui.Error("✗ Data directory issue: %v", statErr)
 		hasIssues = true
 	} else if !info.IsDir() {
 		ui.Error("✗ Data directory is not a directory: %s", cfg.DataDir)
@@ -85,8 +85,8 @@ func runDoctor(_ *cobra.Command, _ []string) error {
 	}
 
 	// Check Repos Dir
-	if info, err := os.Stat(cfg.ReposDir); err != nil {
-		ui.Error("✗ Repos directory issue: %v", err)
+	if info, statErr := os.Stat(cfg.ReposDir); statErr != nil {
+		ui.Error("✗ Repos directory issue: %v", statErr)
 		hasIssues = true
 	} else if !info.IsDir() {
 		ui.Error("✗ Repos directory is not a directory: %s", cfg.ReposDir)
@@ -99,9 +99,9 @@ func runDoctor(_ *cobra.Command, _ []string) error {
 	// 3. Check Registry
 	ui.Info("Checking Registry...")
 	reg := registry.New()
-	repos, err := reg.List()
-	if err != nil {
-		ui.Error("✗ Failed to list repositories: %v", err)
+	repos, regErr := reg.List()
+	if regErr != nil {
+		ui.Error("✗ Failed to list repositories: %v", regErr)
 		hasIssues = true
 	} else {
 		ui.Success("Registry loaded: %d repositories", len(repos))
@@ -109,7 +109,7 @@ func runDoctor(_ *cobra.Command, _ []string) error {
 		// Verify individual repos
 		missingCount := 0
 		for _, repo := range repos {
-			if _, err := os.Stat(repo.BarePath); os.IsNotExist(err) {
+			if _, statErr := os.Stat(repo.BarePath); os.IsNotExist(statErr) {
 				ui.Warning("  ! Missing bare repo: %s (%s)", repo.Name, repo.BarePath)
 				missingCount++
 			}
@@ -130,9 +130,9 @@ func runDoctor(_ *cobra.Command, _ []string) error {
 		ui.Success("Server is running (PID: %d)", pid)
 
 		// Check health
-		conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", cfg.BindAddress, cfg.Port), 2*time.Second)
-		if err != nil {
-			ui.Error("✗ Server port %d is not responding: %v", cfg.Port, err)
+		conn, connErr := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", cfg.BindAddress, cfg.Port), 2*time.Second)
+		if connErr != nil {
+			ui.Error("✗ Server port %d is not responding: %v", cfg.Port, connErr)
 			hasIssues = true
 		} else {
 			_ = conn.Close()
@@ -143,8 +143,8 @@ func runDoctor(_ *cobra.Command, _ []string) error {
 
 		// Check if port is free
 		address := fmt.Sprintf("%s:%d", cfg.BindAddress, cfg.Port)
-		ln, err := net.Listen("tcp", address)
-		if err != nil {
+		ln, lnErr := net.Listen("tcp", address)
+		if lnErr != nil {
 			ui.Warning("! Port %d seems to be in use by another process", cfg.Port)
 		} else {
 			_ = ln.Close()
