@@ -120,24 +120,36 @@ lgh stop
 
 Server listens on `http://127.0.0.1:9418` by default.
 
-### 3. Add a Repository
+### 3. One-Step Add & Push (v1.0.9+)
+The fastest way to host a local project:
 
 ```bash
-# Add current directory
 cd your-project
-lgh add .
-
-# Or specify a path
-lgh add /path/to/your/project
-
-# Use custom name
-lgh add . --name my-awesome-project
+lgh add . --push
 ```
 
-### 4. Push Code
+This single command will:
+1.  Initialize a Git repo (if not already one).
+2.  **Auto-Commit** all files (if the repo is empty).
+3.  Register it with LGH.
+4.  **Auto-Push** to the server immediately.
+
+### 4. Add Without Pushing
+If you prefer manual control:
+
+```bash
+lgh add .
+# Then push manually later
+git push -u lgh main
+```
+
+### 5. Push Code
+After adding, you can use standard Git commands:
 
 ```bash
 git push lgh main
+# or
+git push
 ```
 
 ### 5. Clone from Elsewhere
@@ -164,6 +176,7 @@ git clone http://127.0.0.1:9418/your-project.git
 | `lgh repo status` | Check repo connection state | `lgh repo status` |
 | `lgh remote use` | Switch active remote | `lgh remote use lgh` |
 | `lgh clone` | Simple clone from LGH | `lgh clone repo-name` |
+| `lgh events` | View/watch system event logs | `lgh events -n 20 --watch` |
 
 ### Repository Management (v1.0.4+)
 
@@ -195,6 +208,21 @@ lgh repo set-default my-project main
 
 # Check system health
 lgh doctor
+```
+
+### Monitoring & Logs (v1.0.5+)
+
+Track system activity and repository changes in real-time.
+
+```bash
+# View recent events
+lgh events
+
+# Watch for new events (like 'tail -f')
+lgh events --watch
+
+# Filter by type
+lgh events --type git.push
 ```
 
 ### Server Options

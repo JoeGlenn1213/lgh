@@ -45,7 +45,7 @@ var (
 
 var addCmd = &cobra.Command{
 	Use:   "add [path]",
-	Short: "Add a local repository to LGH",
+	Short: "Add a local repository to LGH (supports auto-push)",
 	Long: `Add a local directory or Git repository to LGH for HTTP hosting.
 
 This command:
@@ -54,6 +54,11 @@ This command:
   3. Adds a remote named 'lgh' to your local repository
   4. Registers the mapping in mappings.yaml
 
+One-Step Setup (v1.0.9+):
+  If you use --push, LGH will also:
+  - Auotmatically 'git add .' and 'git commit' if the repository is empty (fresh project)
+  - Automatically push the current branch to the server
+
 If no path is specified, the current directory is used.
 
 Examples:
@@ -61,7 +66,7 @@ Examples:
   lgh add ./my-project         # Add specific path
   lgh add . --name my-app      # Add with custom name
   lgh add . --no-remote        # Don't add remote to source repo
-  lgh add . --push             # Auto-push current branch to LGH
+  lgh add . --push             # Auto-commit & push (One-step setup)
   lgh add . --push-branch main # Auto-push specific branch`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runAdd,

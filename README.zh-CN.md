@@ -120,24 +120,36 @@ lgh stop
 
 服务器默认监听 `http://127.0.0.1:9418`
 
-### 3. 添加仓库
+### 3. 一键添加并推送 (v1.0.9+)
+托管本地项目最快的方式：
 
 ```bash
-# 添加当前目录
 cd your-project
-lgh add .
-
-# 或指定路径
-lgh add /path/to/your/project
-
-# 使用自定义名称
-lgh add . --name my-awesome-project
+lgh add . --push
 ```
 
-### 4. 推送代码
+这条命令将自动执行：
+1.  初始化 Git 仓库（如果尚未初始化）。
+2.  **自动提交** 所有文件（如果是空仓库）。
+3.  注册到 LGH。
+4.  **自动推送** 到服务器。
+
+### 4. 添加但不推送
+如果你更喜欢手动控制：
+
+```bash
+lgh add .
+# 之后手动推送
+git push -u lgh main
+```
+
+### 5. 推送代码
+添加完成后，使用标准 Git 命令即可：
 
 ```bash
 git push lgh main
+# 或
+git push
 ```
 
 ### 5. 在其他地方克隆
@@ -164,6 +176,7 @@ git clone http://127.0.0.1:9418/your-project.git
 | `lgh repo status` | 查看仓库连接状态 | `lgh repo status` |
 | `lgh remote use` | 切换当前使用的远程 | `lgh remote use lgh` |
 | `lgh clone` | 快速克隆 | `lgh clone repo-name` |
+| `lgh events` | 查看/监听系统日志 | `lgh events -n 20 --watch` |
 
 ### 仓库管理工具 (v1.0.4+)
 
@@ -195,6 +208,21 @@ lgh repo set-default my-project main
 
 # 系统自检
 lgh doctor
+```
+
+### 监控与日志 (v1.0.5+)
+
+实时追踪系统活动和仓库变更。
+
+```bash
+# 查看最近事件
+lgh events
+
+# 监听新事件 (类似 'tail -f')
+lgh events --watch
+
+# 按类型过滤
+lgh events --type git.push
 ```
 
 ### 服务器选项
