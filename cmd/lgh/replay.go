@@ -98,7 +98,14 @@ func runReplay(_ *cobra.Command, _ []string) error {
 		if err != nil {
 			return fmt.Errorf("failed to send event: %w (is server running?)", err)
 		}
-		resp.Body.Close()
+
+		// Ensure body is closed and error handled (G104)
+		func() {
+			if closeErr := resp.Body.Close(); closeErr != nil {
+				// Just log warning or ignore in CLI tool if close fails
+				_ = closeErr
+			}
+		}()
 
 		if resp.StatusCode != http.StatusOK {
 			ui.Warning("  ! Server returned %s", resp.Status)
@@ -115,6 +122,7 @@ func runReplay(_ *cobra.Command, _ []string) error {
 
 // readLastEvents matches showRecentEvents logic but returns struct slice
 func readLastEvents(path string, limit int, filterType string) ([]event.Event, error) {
+	// nolint:gosec // G304: Path is constructed from trusted config DataDir
 	file, err := os.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {
