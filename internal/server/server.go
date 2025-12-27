@@ -22,6 +22,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
@@ -85,6 +86,11 @@ func (s *Server) Start() error {
 		_, _ = w.Write([]byte("OK"))
 	})
 
+	// Debug Event Injection (v1.1.0)
+	// Allows replaying/injecting events via HTTP (Localhost only recommended)
+	// Takes a JSON event body and broadcasts it via the Broker.
+	mux.HandleFunc("/debug/events", s.handleDebugEvents)
+
 	// Git backend for all .git paths
 	mux.Handle("/", handler)
 
@@ -117,6 +123,12 @@ func (s *Server) Start() error {
 
 	// Display server info
 	s.displayStartupInfo()
+
+	// Initialize Event Broker
+	event.StartBroker()
+
+	// Start IPC Listener (v1.1.0)
+	s.startIPC()
 
 	// Start server
 	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -294,4 +306,45 @@ func (s *Server) virtualOwnerMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+// handleDebugEvents handles event injection via HTTP
+func (s *Server) handleDebugEvents(w http.ResponseWriter, r *http.Request) {
+	// Security: Only allow POST
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Security: Strict Localhost Enforcement
+	// We only allow local processes to inject debug events.
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	if host != "127.0.0.1" && host != "::1" {
+		ui.Warning("Blocked external attempt to access /debug/events from %s", host)
+		http.Error(w, "Forbidden: Localhost only", http.StatusForbidden)
+		return
+	}
+
+	var evt event.Event
+	if err := json.NewDecoder(r.Body).Decode(&evt); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	// Tag the event as replayed
+	if evt.Payload == nil {
+		evt.Payload = make(map[string]interface{})
+	}
+	evt.Payload["_replayed"] = true
+
+	// Broadcast
+	event.Broadcast(evt)
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte(`{"status":"ok"}`))
 }

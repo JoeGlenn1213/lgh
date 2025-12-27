@@ -221,9 +221,31 @@ lgh events
 # Watch for new events (like 'tail -f')
 lgh events --watch
 
+```bash
 # Filter by type
 lgh events --type git.push
 ```
+
+### Agent Integration (v1.1.0+)
+
+LGH is designed to be the "source of truth" for AI Agents.
+
+**1. Real-time Subscription (Socket)**
+Connect to the Unix Domain Socket at `~/.localgithub/lgh.sock` to receive a real-time stream of JSON events for every action (repo added, git push, etc.).
+*   **Protocol**: Unix Socket, JSON Lines.
+*   **Security**: Read-Only. Only the local user can connect.
+
+**2. Event Replay (Simulation)**
+Inject past events back into the system to test your Agents without performing real Git actions.
+
+```bash
+# Replay last 10 events to all connected agents
+lgh events replay --last 10
+
+# Replay specific event types
+lgh events replay --type git.push
+```
+*Note: Replayed events include `“_replayed”: true` in their payload.*
 
 ### Server Options
 
