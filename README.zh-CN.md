@@ -30,11 +30,11 @@
 
 | 系统 | 架构 | 下载 |
 |------|------|------|
-| macOS | Apple Silicon (M1/M2/M3) | [lgh-1.0.9-darwin-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.9/lgh-1.0.9-darwin-arm64) |
-| macOS | Intel | [lgh-1.0.9-darwin-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.9/lgh-1.0.9-darwin-amd64) |
-| Linux | x86_64 | [lgh-1.0.9-linux-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.9/lgh-1.0.9-linux-amd64) |
-| Linux | ARM64 | [lgh-1.0.9-linux-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.9/lgh-1.0.9-linux-arm64) |
-| Windows | x86_64 | [lgh-1.0.9-windows-amd64.exe](https://github.com/JoeGlenn1213/lgh/releases/download/v1.0.9/lgh-1.0.9-windows-amd64.exe) |
+| macOS | Apple Silicon (M1/M2/M3) | [lgh-1.1.0-darwin-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.1.0/lgh-1.1.0-darwin-arm64) |
+| macOS | Intel | [lgh-1.1.0-darwin-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.1.0/lgh-1.1.0-darwin-amd64) |
+| Linux | x86_64 | [lgh-1.1.0-linux-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.1.0/lgh-1.1.0-linux-amd64) |
+| Linux | ARM64 | [lgh-1.1.0-linux-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.1.0/lgh-1.1.0-linux-arm64) |
+| Windows | x86_64 | [lgh-1.1.0-windows-amd64.exe](https://github.com/JoeGlenn1213/lgh/releases/download/v1.1.0/lgh-1.1.0-windows-amd64.exe) |
 
 ```bash
 # 下载后安装（以 macOS ARM64 为例）
@@ -44,7 +44,7 @@ sudo mv lgh-1.0.9-darwin-arm64 /usr/local/bin/lgh
 
 #### Windows 安装
 
-1. 下载 `lgh-1.0.9-windows-amd64.exe`
+1. 下载 `lgh-1.1.0-windows-amd64.exe`
 2. 重命名为 `lgh.exe`
 3. 移动到系统 `%PATH%` 路径下的文件夹中 (例如 `C:\Program Files\lgh\`)
 4. 在 PowerShell 或 CMD 中运行
