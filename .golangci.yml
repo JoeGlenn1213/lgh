@@ -82,4 +82,9 @@ issues:
       linters:
         - revive
       text: "exported:"
+    # internal 包不强制导出注释
+    - path: internal/
+      linters:
+        - revive
+      text: "exported:"
 
