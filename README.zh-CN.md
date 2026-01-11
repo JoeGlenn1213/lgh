@@ -6,11 +6,9 @@
   <img src="https://img.shields.io/badge/Platform-macOS%20|%20Linux%20|%20Windows-lightgrey" alt="Platform">
 </p>
 
-<p align="center">
-  <a href="README.md">English</a>
-</p>
+> 🚀 Instantly turn any directory into a Git server. **Built-in MCP Server** for AI Agents, smart-ignore, and zero-config. AI-workflow ready. Powered by Go.
 
-**LGH (LocalGitHub)** 是一个轻量级本地 Git 托管服务。它通过封装 `git http-backend`，提供类似 GitHub 的 HTTP 访问能力，但完全运行在 localhost，实现"本地目录即 Git 服务"。
+**LGH (LocalGitHub)** 是一个轻量级、开发者友好的本地 Git 托管服务。它不仅提供类似 GitHub 的 HTTP 访问能力，更在 v1.2.0+ 中深度集成了 **MCP (Model Context Protocol)**，让 AI 助手（如 Cursor / Claude）能够直接理解和操作你的本地代码存档。
 
 ## ✨ 特性
 
