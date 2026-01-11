@@ -30,12 +30,19 @@ import (
 type ProjectType string
 
 const (
-	ProjectTypePython  ProjectType = "python"
-	ProjectTypeGo      ProjectType = "go"
-	ProjectTypeNode    ProjectType = "node"
-	ProjectTypeJava    ProjectType = "java"
-	ProjectTypeRust    ProjectType = "rust"
-	ProjectTypeAI      ProjectType = "ai"
+	// ProjectTypePython represents Python projects
+	ProjectTypePython ProjectType = "python"
+	// ProjectTypeGo represents Go projects
+	ProjectTypeGo ProjectType = "go"
+	// ProjectTypeNode represents Node.js/TypeScript projects
+	ProjectTypeNode ProjectType = "node"
+	// ProjectTypeJava represents Java projects
+	ProjectTypeJava ProjectType = "java"
+	// ProjectTypeRust represents Rust projects
+	ProjectTypeRust ProjectType = "rust"
+	// ProjectTypeAI represents AI/ML projects
+	ProjectTypeAI ProjectType = "ai"
+	// ProjectTypeUnknown represents unknown project type
 	ProjectTypeUnknown ProjectType = "unknown"
 )
 

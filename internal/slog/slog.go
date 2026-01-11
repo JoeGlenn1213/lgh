@@ -34,10 +34,15 @@ import (
 type Level string
 
 const (
+	// LevelDebug logs debug messages
 	LevelDebug Level = "DEBUG"
-	LevelInfo  Level = "INFO"
-	LevelWarn  Level = "WARN"
+	// LevelInfo logs informational messages
+	LevelInfo Level = "INFO"
+	// LevelWarn logs warning messages
+	LevelWarn Level = "WARN"
+	// LevelError logs error messages
 	LevelError Level = "ERROR"
+	// LevelFatal logs fatal messages
 	LevelFatal Level = "FATAL"
 )
 

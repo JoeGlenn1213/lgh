@@ -68,7 +68,7 @@ func init() {
 	rootCmd.AddCommand(upCmd)
 }
 
-func runUp(cmd *cobra.Command, args []string) {
+func runUp(_ *cobra.Command, args []string) {
 	message := args[0]
 
 	// Get current directory
@@ -87,19 +87,20 @@ func runUp(cmd *cobra.Command, args []string) {
 
 	// Step 1: Ensure .gitignore exists (unless --no-ignore)
 	if !upNoIgnore {
-		projectType, err := ignore.EnsureGitignore(cwd)
+		var pType ignore.ProjectType
+		pType, err = ignore.EnsureGitignore(cwd)
 		if err != nil {
 			ui.Warning("Failed to create .gitignore: %v", err)
-		} else if projectType != ignore.ProjectTypeUnknown {
-			ui.Success("Created .gitignore for %s project", projectType)
+		} else if pType != ignore.ProjectTypeUnknown {
+			ui.Success("Created .gitignore for %s project", pType)
 		}
 	}
 
 	// Step 2: Check if this is a git repository
 	if !isGitRepo(cwd) {
 		ui.Info("Initializing git repository...")
-		if err := runGitCommand(cwd, "init"); err != nil {
-			ui.Error("Failed to initialize git: %v", err)
+		if gitInitErr := runGitCommand(cwd, "init"); gitInitErr != nil {
+			ui.Error("Failed to initialize git: %v", gitInitErr)
 			os.Exit(1)
 		}
 	}
@@ -281,6 +282,7 @@ func addRepoToLGH(repoPath, name string, noRemote bool) error {
 	if err != nil {
 		return err
 	}
+	//nolint:gosec // G204: exe resolved internally, args constructed from input
 	cmd := exec.Command(exe, addArgs...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

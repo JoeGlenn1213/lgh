@@ -39,9 +39,13 @@ const (
 type TrashType string
 
 const (
-	TrashTypeLargeFile       TrashType = "large_file"
-	TrashTypeSensitiveFile   TrashType = "sensitive_file"
-	TrashTypeNodeModules     TrashType = "node_modules"
+	// TrashTypeLargeFile indicates a file that exceeds the size limit
+	TrashTypeLargeFile TrashType = "large_file"
+	// TrashTypeSensitiveFile indicates a file that matches sensitive patterns
+	TrashTypeSensitiveFile TrashType = "sensitive_file"
+	// TrashTypeNodeModules indicates the presence of a node_modules directory
+	TrashTypeNodeModules TrashType = "node_modules"
+	// TrashTypeTotalSizeExceed indicates the total staged size exceeds the limit
 	TrashTypeTotalSizeExceed TrashType = "total_size_exceed"
 )
 

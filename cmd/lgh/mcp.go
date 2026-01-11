@@ -80,7 +80,7 @@ func init() {
 	rootCmd.AddCommand(mcpCmd)
 }
 
-func runMcp(cmd *cobra.Command, args []string) error {
+func runMcp(_ *cobra.Command, args []string) error {
 	// Load config
 	if _, err := config.Load(); err != nil {
 		return fmt.Errorf("failed to load config: %w", err)

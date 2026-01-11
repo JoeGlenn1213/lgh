@@ -43,6 +43,7 @@ func init() {
 // BackupSkill - One-click backup (lgh up)
 type BackupSkill struct{}
 
+// Meta returns the metadata for the BackupSkill
 func (s *BackupSkill) Meta() Metadata {
 	return Metadata{
 		ID:          "lgh.backup",
@@ -58,6 +59,7 @@ func (s *BackupSkill) Meta() Metadata {
 	}
 }
 
+// Execute performs the backup operation
 func (s *BackupSkill) Execute(ctx context.Context, input Input) (*Result, error) {
 	start := time.Now()
 
@@ -97,6 +99,7 @@ func (s *BackupSkill) Execute(ctx context.Context, input Input) (*Result, error)
 		}, nil
 	}
 
+	//nolint:gosec // G204: exe resolved internally, args constructed from input
 	cmd := exec.CommandContext(ctx, exe, args...)
 	cmd.Dir = path
 	output, err := cmd.CombinedOutput()
@@ -120,6 +123,7 @@ func (s *BackupSkill) Execute(ctx context.Context, input Input) (*Result, error)
 // StatusSkill - Get LGH status
 type StatusSkill struct{}
 
+// Meta returns the metadata for the StatusSkill
 func (s *StatusSkill) Meta() Metadata {
 	return Metadata{
 		ID:          "lgh.status",
@@ -131,6 +135,7 @@ func (s *StatusSkill) Meta() Metadata {
 	}
 }
 
+// Execute returns the status of LGH
 func (s *StatusSkill) Execute(ctx context.Context, input Input) (*Result, error) {
 	start := time.Now()
 
@@ -153,6 +158,7 @@ func (s *StatusSkill) Execute(ctx context.Context, input Input) (*Result, error)
 // ListReposSkill - List repositories
 type ListReposSkill struct{}
 
+// Meta returns the metadata for the ListReposSkill
 func (s *ListReposSkill) Meta() Metadata {
 	return Metadata{
 		ID:          "lgh.list",
@@ -164,6 +170,7 @@ func (s *ListReposSkill) Meta() Metadata {
 	}
 }
 
+// Execute lists all repositories in LGH
 func (s *ListReposSkill) Execute(ctx context.Context, input Input) (*Result, error) {
 	start := time.Now()
 
@@ -199,7 +206,8 @@ func (s *ListReposSkill) Execute(ctx context.Context, input Input) (*Result, err
 	}, nil
 }
 
-// Convenience function: RunSkill executes a skill by ID
+// RunSkill executes a skill by ID. It is a convenience function.
+// RunSkill ...
 func RunSkill(ctx context.Context, id string, input Input) (*Result, error) {
 	s := Get(id)
 	if s == nil {

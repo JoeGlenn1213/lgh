@@ -72,7 +72,7 @@ func getFloat(args map[string]interface{}, key string) float64 {
 
 // Tool Handlers
 
-func handleStatus(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func handleStatus(_ context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	running, pid := server.IsRunning()
 	cfg := config.Get()
 	reg := registry.New()
@@ -91,7 +91,7 @@ func handleStatus(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallTo
 	return mcp.NewToolResultText(string(data)), nil
 }
 
-func handleList(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func handleList(_ context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	reg := registry.New()
 	repos, err := reg.List()
 	if err != nil {
@@ -130,7 +130,7 @@ func handleAdd(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolR
 	}
 
 	// Check if path exists
-	if _, err := os.Stat(absPath); os.IsNotExist(err) {
+	if _, statErr := os.Stat(absPath); os.IsNotExist(statErr) {
 		return mcp.NewToolResultError(fmt.Sprintf("Path does not exist: %s", absPath)), nil
 	}
 
@@ -280,7 +280,7 @@ func handleServeStart(ctx context.Context, request mcp.CallToolRequest) (*mcp.Ca
 	return mcp.NewToolResultText(string(output)), nil
 }
 
-func handleServeStop(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func handleServeStop(ctx context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	cmd, err := getLGHCmd(ctx, "stop")
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("Failed to resolve lgh binary: %v", err)), nil
@@ -293,7 +293,7 @@ func handleServeStop(ctx context.Context, request mcp.CallToolRequest) (*mcp.Cal
 	return mcp.NewToolResultText(string(output)), nil
 }
 
-func handleLog(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func handleLog(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	params := getArgsMap(request)
 	limit := getFloat(params, "limit")
 	level := getString(params, "level")
@@ -325,12 +325,13 @@ func getLGHCmd(ctx context.Context, args ...string) (*exec.Cmd, error) {
 	if err != nil {
 		return nil, err
 	}
+	//nolint:gosec // G204: exe is trusted (os.Executable), args are commands
 	return exec.CommandContext(ctx, exe, args...), nil
 }
 
 // Resource Handlers
 
-func handleResourceConfig(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
+func handleResourceConfig(_ context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
 	cfg := config.Get()
 	data, _ := json.MarshalIndent(map[string]interface{}{
 		"data_dir":     cfg.DataDir,
@@ -347,7 +348,7 @@ func handleResourceConfig(ctx context.Context, request mcp.ReadResourceRequest) 
 	}, nil
 }
 
-func handleResourceRepos(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
+func handleResourceRepos(_ context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
 	reg := registry.New()
 	repos, _ := reg.List()
 
@@ -366,7 +367,7 @@ func handleResourceRepos(ctx context.Context, request mcp.ReadResourceRequest) (
 	}, nil
 }
 
-func handleResourceServerStatus(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
+func handleResourceServerStatus(_ context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
 	running, pid := server.IsRunning()
 	cfg := config.Get()
 

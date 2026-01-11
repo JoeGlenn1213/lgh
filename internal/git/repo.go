@@ -224,6 +224,7 @@ func CloneRepo(sourceURL, destPath string) error {
 		args = append(args, destPath)
 	}
 
+	//nolint:gosec // G204: args are constructed from trusted sourceURL
 	cmd := exec.Command("git", args...)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to clone: %s, %w", string(output), err)

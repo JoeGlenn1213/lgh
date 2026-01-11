@@ -58,10 +58,16 @@ func GenerateGitignore(dir string, projectType ProjectType) error {
 
 	// Always prepend universal rules
 	if projectType != ProjectTypeUnknown {
-		template = universalTemplate + "\n# " + strings.Title(string(projectType)) + " specific\n" + template
+		// Manual title casing to avoid strings.Title deprecation (SA1019)
+		title := string(projectType)
+		if len(title) > 0 {
+			title = strings.ToUpper(string(title[0])) + title[1:]
+		}
+		template = universalTemplate + "\n# " + title + " specific\n" + template
 	}
 
 	gitignorePath := filepath.Join(dir, ".gitignore")
+	//nolint:gosec // G306: .gitignore is not sensitive
 	return os.WriteFile(gitignorePath, []byte(template), 0644)
 }
 

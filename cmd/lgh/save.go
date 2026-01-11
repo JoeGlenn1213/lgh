@@ -60,7 +60,7 @@ func init() {
 	rootCmd.AddCommand(saveCmd)
 }
 
-func runSave(cmd *cobra.Command, args []string) {
+func runSave(_ *cobra.Command, args []string) {
 	message := args[0]
 
 	// Get current directory
