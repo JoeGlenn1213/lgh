@@ -37,6 +37,8 @@ const (
 
 	// GitPush indicates a git push operation (receive-pack) occurred
 	GitPush Type = "git.push"
+	// GitTag indicates a tag was created/pushed
+	GitTag Type = "git.tag"
 )
 
 // Event represents a system event in LGH

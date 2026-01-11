@@ -210,7 +210,21 @@ func GetDefaultBranch(repoPath string) (string, error) {
 
 // CloneRepo clones a repository
 func CloneRepo(sourceURL, destPath string) error {
-	cmd := exec.Command("git", "clone", sourceURL, destPath)
+	args := []string{"clone", sourceURL}
+
+	// If destPath is empty, derive it from the URL to avoid .git suffix in directory name
+	if destPath == "" {
+		// Extract the last path component from URL and remove .git suffix
+		// e.g., "http://127.0.0.1:9418/lgh/ActionD.git" -> "ActionD"
+		base := filepath.Base(sourceURL)
+		destPath = strings.TrimSuffix(base, ".git")
+	}
+
+	if destPath != "" {
+		args = append(args, destPath)
+	}
+
+	cmd := exec.Command("git", args...)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to clone: %s, %w", string(output), err)
 	}

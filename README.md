@@ -21,6 +21,8 @@
 - 🛡️ **Read-Only Mode** - Optional read-only mode to protect repositories
 - 📡 **mDNS Discovery** - Automatic LAN discovery for team collaboration
 - 🌍 **Tunnel Support** - One-click expose to internet (ngrok, cloudflared)
+- ⚡ **Smart Archival (v1.2.0)** - `lgh up` / `lgh save` commands with auto .gitignore
+- 🤖 **MCP Server (v1.2.0)** - AI Agent integration (Cursor, Claude Desktop)
 
 ## 📦 Installation
 
@@ -30,21 +32,21 @@ Download the pre-built binary for your system:
 
 | OS | Architecture | Download |
 |------|------|------|
-| macOS | Apple Silicon (M1/M2/M3) | [lgh-1.1.0-darwin-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.1.0/lgh-1.1.0-darwin-arm64) |
-| macOS | Intel | [lgh-1.1.0-darwin-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.1.0/lgh-1.1.0-darwin-amd64) |
-| Linux | x86_64 | [lgh-1.1.0-linux-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.1.0/lgh-1.1.0-linux-amd64) |
-| Linux | ARM64 | [lgh-1.1.0-linux-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.1.0/lgh-1.1.0-linux-arm64) |
-| Windows | x86_64 | [lgh-1.1.0-windows-amd64.exe](https://github.com/JoeGlenn1213/lgh/releases/download/v1.1.0/lgh-1.1.0-windows-amd64.exe) |
+| macOS | Apple Silicon (M1/M2/M3) | [lgh-1.2.0-darwin-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.2.0/lgh-1.2.0-darwin-arm64) |
+| macOS | Intel | [lgh-1.2.0-darwin-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.2.0/lgh-1.2.0-darwin-amd64) |
+| Linux | x86_64 | [lgh-1.2.0-linux-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.2.0/lgh-1.2.0-linux-amd64) |
+| Linux | ARM64 | [lgh-1.2.0-linux-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.2.0/lgh-1.2.0-linux-arm64) |
+| Windows | x86_64 | [lgh-1.2.0-windows-amd64.exe](https://github.com/JoeGlenn1213/lgh/releases/download/v1.2.0/lgh-1.2.0-windows-amd64.exe) |
 
 ```bash
 # Install after download (macOS ARM64 example)
-chmod +x lgh-1.1.0-darwin-arm64
-sudo mv lgh-1.1.0-darwin-arm64 /usr/local/bin/lgh
+chmod +x lgh-1.2.0-darwin-arm64
+sudo mv lgh-1.2.0-darwin-arm64 /usr/local/bin/lgh
 ```
 
 #### Windows Installation
 
-1. Download `lgh-1.1.0-windows-amd64.exe`
+1. Download `lgh-1.2.0-windows-amd64.exe`
 2. Rename to `lgh.exe`
 3. Move to a folder in your `%PATH%` (e.g., `C:\Program Files\lgh\`)
 4. Run in PowerShell or Command Prompt
@@ -143,6 +145,23 @@ lgh add .
 git push -u lgh main
 ```
 
+### 5. Smart Archival (v1.2.0+)
+
+The fastest way to backup and sync your code:
+
+```bash
+# One-click: auto .gitignore + add + commit + push
+lgh up "commit message"
+
+# Local save only (no push)
+lgh save "WIP: work in progress"
+```
+
+**Smart Ignore** automatically:
+- Detects project type (Python, Go, Node, Java, Rust, AI/ML)
+- Generates appropriate `.gitignore` file
+- Blocks large files (>50MB) and sensitive files (.env, *.key)
+
 ### 5. Push Code
 After adding, you can use standard Git commands:
 
@@ -177,6 +196,10 @@ git clone http://127.0.0.1:9418/your-project.git
 | `lgh remote use` | Switch active remote | `lgh remote use lgh` |
 | `lgh clone` | Simple clone from LGH | `lgh clone repo-name` |
 | `lgh events` | View/watch system event logs | `lgh events -n 20 --watch` |
+| `lgh up` | One-click commit and push | `lgh up "message"` |
+| `lgh save` | Local save (no push) | `lgh save "WIP"` |
+| `lgh log` | View server logs | `lgh log --level ERROR` |
+| `lgh mcp` | Start MCP server for AI | `lgh mcp` |
 
 ### Repository Management (v1.0.4+)
 
@@ -265,6 +288,38 @@ lgh serve --mdns
 # Bind to all interfaces (LAN access)
 lgh serve --bind 0.0.0.0
 ```
+
+## 🤖 MCP Quick Setup Guide
+
+Want to connect LGH to Cursor or Claude Desktop?
+
+### Scenario 1: You already have LGH installed
+Simply update your AI editor's config file (e.g., `~/.cursor/mcp.json`) with:
+
+```json
+{
+  "mcpServers": {
+    "lgh": {
+      "command": "lgh",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+### Scenario 2: You don't have LGH yet (One-Click Install)
+
+Run this single command to install the latest binary:
+```bash
+curl -sSL https://raw.githubusercontent.com/JoeGlenn1213/lgh/main/install.sh | bash
+```
+
+Once installed, follow the "Scenario 1" step. We designed LGH as a single binary, so you **don't** need a separate "MCP Plugin". The `lgh` binary IS the MCP server!
+
+### Verify Setup
+Ask your AI Agent:
+> "Check LGH status"
+If it calls `lgh_status` and responds, you're all set!
 
 ### Add Repository Options
 

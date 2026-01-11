@@ -1,3 +1,72 @@
+# LGH 本地开发日志
+
+## v1.2.0 (2026-01-11) - Smart Archival System
+
+### New Features
+- **`lgh up "msg"`**: 一键起飞命令
+  - 自动检测项目类型并生成 `.gitignore`（Python/Go/Node/Java/Rust/AI）
+  - 执行 `git add .` + `git commit` + `git push`
+  - 支持 `--force` 跳过垃圾检测，`--no-ignore` 跳过自动忽略
+  - 首次使用可加 `-n <name>` 指定仓库名
+
+- **`lgh save "msg"`**: 本地存档命令
+  - 与 `lgh up` 类似，但不推送到远程
+  - 适合 WIP 代码的临时保存
+
+- **Smart Ignore**: 智能 `.gitignore` 生成
+  - 自动检测项目类型：Python、Go、Node/TS、Java、Rust、AI/ML
+  - 根据项目类型生成对应的 `.gitignore` 模板
+  - 已集成到 `lgh add`、`lgh up`、`lgh save`
+
+- **Trash Detection**: 垃圾预警系统
+  - 大文件检测（>50MB 单文件阻断）
+  - 敏感文件阻断（`.env`、`*.key` 等）
+  - 危险目录检测（`node_modules/`、`__pycache__/` 等）
+
+- **`lgh log`**: 服务运行日志查看
+  - 查看服务启动、错误、警告等运行时日志
+  - 支持 `--level ERROR` 按级别过滤
+  - 支持 `--json` 输出 JSON 格式（供 AI/MCP 使用）
+  - 支持 `--watch` 实时监控
+
+- **`lgh mcp`**: MCP 服务器（AI Agent 集成）
+  - 支持 stdio 传输模式（Cursor、Claude Desktop）
+  - 9 个工具：lgh_status, lgh_list, lgh_add, lgh_remove, lgh_up, lgh_save, lgh_serve_start, lgh_serve_stop, lgh_log
+  - 3 个资源：lgh://config, lgh://repos, lgh://server/status
+
+- **Skill SDK (`pkg/skill/`)**: 能力接口
+  - 可被外部项目 import 使用
+  - 3 个内置 Skill：lgh.backup, lgh.status, lgh.list
+  - 简洁接口：Skill.Meta() + Skill.Execute()
+
+### New Files
+- `internal/ignore/detect.go` - 项目类型检测
+- `internal/ignore/templates.go` - Gitignore 模板
+- `internal/ignore/trash.go` - 垃圾预警检测
+- `internal/slog/slog.go` - 服务日志记录器
+- `internal/mcp/server.go` - MCP 服务器核心
+- `internal/mcp/tools.go` - MCP 工具处理器
+- `cmd/lgh/up.go` - `lgh up` 命令
+- `cmd/lgh/save.go` - `lgh save` 命令
+- `cmd/lgh/log.go` - `lgh log` 命令
+- `cmd/lgh/mcp.go` - `lgh mcp` 命令
+
+### Modified Files
+- `cmd/lgh/add.go` - 集成 Smart Ignore，新增 `--no-ignore` 参数
+- `internal/server/server.go` - 集成 slog 服务日志
+
+---
+
+## v1.1.1 (2025-12-29) - Pending Release
+
+### Fixes
+- **Clone Directory Naming**: Fixed `lgh clone` creating directories with `.git` suffix.
+  - Previously, `lgh clone ActionD` would create a directory named `ActionD.git` because git uses the URL's last path component directly.
+  - Now we strip the `.git` suffix to create `ActionD` as expected.
+  - Affected file: `internal/git/repo.go` - `CloneRepo()` function.
+
+---
+
 # LGH v1.0.4 发布准备
 
 **日期**: 2025-12-26

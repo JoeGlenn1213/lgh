@@ -164,9 +164,31 @@ func (b *Backend) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if len(changes) > 0 {
-				event.Publish(event.GitPush, repoPath, map[string]interface{}{
-					"changes": changes,
-				})
+				// Separate tag changes from branch changes
+				branchChanges := make(map[string]map[string]string)
+				tagChanges := make(map[string]map[string]string)
+
+				for ref, change := range changes {
+					if strings.HasPrefix(ref, "refs/tags/") {
+						tagChanges[ref] = change
+					} else {
+						branchChanges[ref] = change
+					}
+				}
+
+				// Emit branch push event
+				if len(branchChanges) > 0 {
+					event.Publish(event.GitPush, repoPath, map[string]interface{}{
+						"changes": branchChanges,
+					})
+				}
+
+				// Emit tag event
+				if len(tagChanges) > 0 {
+					event.Publish(event.GitTag, repoPath, map[string]interface{}{
+						"changes": tagChanges,
+					})
+				}
 			}
 		}
 	}

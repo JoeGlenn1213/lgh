@@ -66,6 +66,15 @@ func runTunnel(_ *cobra.Command, _ []string) error {
 	}
 
 	cfg := config.Get()
+
+	// SECURITY: Tunneling requires authentication
+	if !cfg.AuthEnabled {
+		ui.Error("🚨 SECURITY RISK: Authentication is NOT enabled!")
+		ui.Warning("Exposing LGH to the internet without a password puts your code at risk.")
+		ui.Info("Run 'lgh auth setup' to enable authentication first.")
+		return fmt.Errorf("authentication required for tunnel")
+	}
+
 	t := tunnel.NewTunnel(cfg.Port)
 
 	// Show available methods

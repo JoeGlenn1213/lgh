@@ -21,6 +21,8 @@
 - 🛡️ **只读模式** - 可选的只读模式保护仓库安全
 - 📡 **mDNS 发现** - 局域网自动发现，方便团队协作
 - 🌍 **隧道支持** - 一键暴露到外网（支持 ngrok、cloudflared）
+- ⚡ **智能存档 (v1.2.0)** - `lgh up` / `lgh save` 命令，自动 .gitignore
+- 🤖 **MCP 服务 (v1.2.0)** - AI Agent 集成（Cursor、Claude Desktop）
 
 ## 📦 安装
 
@@ -30,21 +32,21 @@
 
 | 系统 | 架构 | 下载 |
 |------|------|------|
-| macOS | Apple Silicon (M1/M2/M3) | [lgh-1.1.0-darwin-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.1.0/lgh-1.1.0-darwin-arm64) |
-| macOS | Intel | [lgh-1.1.0-darwin-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.1.0/lgh-1.1.0-darwin-amd64) |
-| Linux | x86_64 | [lgh-1.1.0-linux-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.1.0/lgh-1.1.0-linux-amd64) |
-| Linux | ARM64 | [lgh-1.1.0-linux-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.1.0/lgh-1.1.0-linux-arm64) |
-| Windows | x86_64 | [lgh-1.1.0-windows-amd64.exe](https://github.com/JoeGlenn1213/lgh/releases/download/v1.1.0/lgh-1.1.0-windows-amd64.exe) |
+| macOS | Apple Silicon (M1/M2/M3) | [lgh-1.2.0-darwin-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.2.0/lgh-1.2.0-darwin-arm64) |
+| macOS | Intel | [lgh-1.2.0-darwin-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.2.0/lgh-1.2.0-darwin-amd64) |
+| Linux | x86_64 | [lgh-1.2.0-linux-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.2.0/lgh-1.2.0-linux-amd64) |
+| Linux | ARM64 | [lgh-1.2.0-linux-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.2.0/lgh-1.2.0-linux-arm64) |
+| Windows | x86_64 | [lgh-1.2.0-windows-amd64.exe](https://github.com/JoeGlenn1213/lgh/releases/download/v1.2.0/lgh-1.2.0-windows-amd64.exe) |
 
 ```bash
 # 下载后安装（以 macOS ARM64 为例）
-chmod +x lgh-1.0.9-darwin-arm64
-sudo mv lgh-1.0.9-darwin-arm64 /usr/local/bin/lgh
+chmod +x lgh-1.2.0-darwin-arm64
+sudo mv lgh-1.2.0-darwin-arm64 /usr/local/bin/lgh
 ```
 
 #### Windows 安装
 
-1. 下载 `lgh-1.1.0-windows-amd64.exe`
+1. 下载 `lgh-1.2.0-windows-amd64.exe`
 2. 重命名为 `lgh.exe`
 3. 移动到系统 `%PATH%` 路径下的文件夹中 (例如 `C:\Program Files\lgh\`)
 4. 在 PowerShell 或 CMD 中运行
@@ -143,6 +145,23 @@ lgh add .
 git push -u lgh main
 ```
 
+### 5. 智能存档 (v1.2.0+)
+
+备份和同步代码最快的方式：
+
+```bash
+# 一键起飞：自动 .gitignore + add + commit + push
+lgh up "提交信息"
+
+# 本地存档（不推送）
+lgh save "WIP: 工作进行中"
+```
+
+**智能忽略** 自动：
+- 检测项目类型（Python、Go、Node、Java、Rust、AI/ML）
+- 生成合适的 `.gitignore` 文件
+- 阻止大文件（>50MB）和敏感文件（.env、*.key）
+
 ### 5. 推送代码
 添加完成后，使用标准 Git 命令即可：
 
@@ -177,6 +196,10 @@ git clone http://127.0.0.1:9418/your-project.git
 | `lgh remote use` | 切换当前使用的远程 | `lgh remote use lgh` |
 | `lgh clone` | 快速克隆 | `lgh clone repo-name` |
 | `lgh events` | 查看/监听系统日志 | `lgh events -n 20 --watch` |
+| `lgh up` | 一键提交并推送 | `lgh up "信息"` |
+| `lgh save` | 本地存档（不推送） | `lgh save "WIP"` |
+| `lgh log` | 查看服务日志 | `lgh log --level ERROR` |
+| `lgh mcp` | 启动 MCP 服务器 | `lgh mcp` |
 
 ### 仓库管理工具 (v1.0.4+)
 
@@ -240,9 +263,41 @@ lgh serve --port 8080
 # 启用 mDNS 局域网发现
 lgh serve --mdns
 
-# 绑定到所有网卡（局域网访问）
+### 绑定到所有网卡（局域网访问）
 lgh serve --bind 0.0.0.0
 ```
+
+## 🤖 MCP 快速配置指南
+
+想要把 LGH 接入 Cursor 或 Claude Desktop？
+
+### 情况 1：你已经安装了 LGH
+直接修改这类 AI 编辑器的配置文件（通常在 `~/.cursor/mcp.json` 或类似位置），加入：
+
+```json
+{
+  "mcpServers": {
+    "lgh": {
+      "command": "lgh",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+### 情况 2：你还没安装 LGH (一键极速版)
+
+复制粘贴这行命令，全自动安装最新版：
+```bash
+curl -sSL https://raw.githubusercontent.com/JoeGlenn1213/lgh/main/install.sh | bash
+```
+
+安装完成后，重复"情况 1"的配置步骤即可。我们特意保持了单文件设计，**不需要**单独下载什么 "LGH MCP 插件"，`lgh` 本身就是一个完整的 MCP 服务器！
+
+### 验证安装
+在 AI 对话框输入：
+> "检查一下 LGH 服务状态"
+如果它调用了 `lgh_status` 并回复你，那就是通了！
 
 ### 添加仓库选项
 

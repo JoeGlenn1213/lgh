@@ -173,6 +173,8 @@ func printEventLine(line string) {
 	switch evt.Type {
 	case event.GitPush:
 		typeColor = ui.Green
+	case event.GitTag:
+		typeColor = ui.Yellow
 	case event.RepoAdded:
 		typeColor = ui.Cyan
 	case event.RepoRemoved:

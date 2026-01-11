@@ -31,16 +31,18 @@ import (
 	"github.com/JoeGlenn1213/lgh/internal/config"
 	"github.com/JoeGlenn1213/lgh/internal/event"
 	"github.com/JoeGlenn1213/lgh/internal/git"
+	"github.com/JoeGlenn1213/lgh/internal/ignore"
 	"github.com/JoeGlenn1213/lgh/internal/registry"
 	"github.com/JoeGlenn1213/lgh/internal/server"
 	"github.com/JoeGlenn1213/lgh/pkg/ui"
 )
 
 var (
-	repoName   string
-	noRemote   bool
-	autoPush   bool
-	pushBranch string
+	repoName    string
+	noRemote    bool
+	autoPush    bool
+	pushBranch  string
+	addNoIgnore bool
 )
 
 var addCmd = &cobra.Command{
@@ -77,6 +79,7 @@ func init() {
 	addCmd.Flags().BoolVar(&noRemote, "no-remote", false, "Don't add 'lgh' remote to the source repository")
 	addCmd.Flags().BoolVar(&autoPush, "push", false, "Automatically push current branch to LGH remote")
 	addCmd.Flags().StringVar(&pushBranch, "push-branch", "", "Specify branch to push (defaults to current HEAD)")
+	addCmd.Flags().BoolVar(&addNoIgnore, "no-ignore", false, "Don't auto-generate .gitignore")
 }
 
 func runAdd(_ *cobra.Command, args []string) error {
@@ -120,6 +123,16 @@ func runAdd(_ *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to initialize git repository: %w", err)
 		}
 		ui.Success("Initialized Git repository at %s", absPath)
+	}
+
+	// Smart Ignore: Ensure .gitignore exists (unless --no-ignore)
+	if !addNoIgnore {
+		projectType, err := ignore.EnsureGitignore(absPath)
+		if err != nil {
+			ui.Warning("Failed to create .gitignore: %v", err)
+		} else if projectType != ignore.ProjectTypeUnknown {
+			ui.Success("Created .gitignore for %s project", projectType)
+		}
 	}
 
 	// Auto-Commit if enabled and empty

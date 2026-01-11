@@ -36,6 +36,7 @@ import (
 	"github.com/JoeGlenn1213/lgh/internal/config"
 	"github.com/JoeGlenn1213/lgh/internal/event"
 	"github.com/JoeGlenn1213/lgh/internal/git"
+	"github.com/JoeGlenn1213/lgh/internal/slog"
 	"github.com/JoeGlenn1213/lgh/pkg/ui"
 )
 
@@ -55,9 +56,20 @@ func New(cfg *config.Config) *Server {
 
 // Start starts the HTTP server
 func (s *Server) Start() error {
+	// Initialize service logger
+	if err := slog.Init(s.cfg.DataDir); err != nil {
+		ui.Warning("Failed to initialize service logger: %v", err)
+	}
+	log := slog.WithComponent("server")
+	log.Info("Server starting", map[string]interface{}{
+		"address":  fmt.Sprintf("%s:%d", s.cfg.BindAddress, s.cfg.Port),
+		"readOnly": s.cfg.ReadOnly,
+	})
+
 	// Create Git backend handler using cfg.ReadOnly
 	gitHandler, err := git.CreateHandler(s.cfg.ReposDir, s.cfg.ReadOnly)
 	if err != nil {
+		log.Error("Failed to create git handler", map[string]interface{}{"error": err.Error()})
 		return fmt.Errorf("failed to create git handler: %w", err)
 	}
 
@@ -131,7 +143,9 @@ func (s *Server) Start() error {
 	s.startIPC()
 
 	// Start server
+	log.Info("Server started successfully")
 	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Error("Server error", map[string]interface{}{"error": err.Error()})
 		return fmt.Errorf("server error: %w", err)
 	}
 
@@ -140,6 +154,7 @@ func (s *Server) Start() error {
 
 // Stop gracefully stops the server
 func (s *Server) Stop() error {
+	slog.Info("Server stopping")
 	if s.httpServer == nil {
 		return nil
 	}
@@ -149,6 +164,9 @@ func (s *Server) Stop() error {
 
 	// Remove PID file
 	_ = os.Remove(config.GetPIDPath())
+
+	// Close logger
+	_ = slog.Close()
 
 	return s.httpServer.Shutdown(ctx)
 }
