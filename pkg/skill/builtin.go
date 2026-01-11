@@ -136,7 +136,7 @@ func (s *StatusSkill) Meta() Metadata {
 }
 
 // Execute returns the status of LGH
-func (s *StatusSkill) Execute(ctx context.Context, input Input) (*Result, error) {
+func (s *StatusSkill) Execute(_ context.Context, input Input) (*Result, error) {
 	start := time.Now()
 
 	running, pid := server.IsRunning()
@@ -171,7 +171,7 @@ func (s *ListReposSkill) Meta() Metadata {
 }
 
 // Execute lists all repositories in LGH
-func (s *ListReposSkill) Execute(ctx context.Context, input Input) (*Result, error) {
+func (s *ListReposSkill) Execute(_ context.Context, input Input) (*Result, error) {
 	start := time.Now()
 
 	reg := registry.New()
