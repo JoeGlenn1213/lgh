@@ -96,7 +96,6 @@ jobs:
         with:
           files: |
             lgh-*
-            lgh-*.sha256
           draft: false
           prerelease: false
           generate_release_notes: true
