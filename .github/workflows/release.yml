@@ -28,25 +28,31 @@ on:
 permissions:
   contents: write
 
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
 jobs:
-  release:
-    name: Release
+  build:
+    name: Build
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
           - goos: darwin
             goarch: amd64
-            suffix: ""
           - goos: darwin
             goarch: arm64
-            suffix: ""
           - goos: linux
             goarch: amd64
-            suffix: ""
           - goos: linux
             goarch: arm64
-            suffix: ""
             
     steps:
       - uses: actions/checkout@v4
@@ -60,11 +66,6 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 0
         run: |
-          BINARY_NAME=lgh
-          if [ "${{ matrix.goos }}" = "windows" ]; then
-            BINARY_NAME=lgh.exe
-          fi
-          
           OUTPUT_NAME=lgh-${{ github.ref_name }}-${{ matrix.goos }}-${{ matrix.goarch }}
           if [ "${{ matrix.goos }}" = "windows" ]; then
             OUTPUT_NAME=${OUTPUT_NAME}.exe
@@ -72,13 +73,40 @@ jobs:
           
           go build -v -o ${OUTPUT_NAME} ./cmd/lgh
           
-          # Calculate SHA256 (useful for Homebrew)
+          # Calculate SHA256
           sha256sum ${OUTPUT_NAME} > ${OUTPUT_NAME}.sha256
           
-      - name: Release
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            lgh-*
+            lgh-*.sha256
+          retention-days: 1
+
+  release:
+    name: Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: binary-*
+          merge-multiple: true
+          
+      - name: Display Structure
+        run: ls -R
+        
+      - name: Create Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
             lgh-*
             lgh-*.sha256
+          draft: false
+          prerelease: false
+          generate_release_notes: true
