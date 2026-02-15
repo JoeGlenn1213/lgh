@@ -199,6 +199,24 @@ git clone http://127.0.0.1:9418/your-project.git
 | `lgh log` | 查看服务日志 | `lgh log --level ERROR` |
 | `lgh mcp` | 启动 MCP 服务器 | `lgh mcp` |
 
+### 回滚功能 (v1.3.0+)
+
+```bash
+# 回滚到上一个 commit（本地）
+lgh rollback
+
+# 回滚 N 个 commit
+lgh rollback --steps 3
+
+# 回滚并强制推送到 LGH
+lgh rollback --push
+```
+
+**MCP 工具**：`lgh_rollback` 参数：
+- `path` - 仓库路径（可选）
+- `steps` - 回滚步数（默认 1）
+- `push` - 是否推送到 LGH（默认 false）
+
 ### 仓库管理工具 (v1.0.4+)
 
 LGH 提供了一套工具来管理本地仓库状态，无需复杂的 git 命令。

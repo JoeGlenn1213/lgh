@@ -27,7 +27,7 @@ import (
 )
 
 // Version is the MCP server version
-const Version = "1.2.0"
+const Version = "1.3.0"
 
 // NewServer creates and configures the LGH MCP server
 func NewServer() *server.MCPServer {
@@ -156,6 +156,23 @@ func registerTools(s *server.MCPServer) {
 			),
 		),
 		handleLog,
+	)
+
+	// lgh_rollback - Rollback to previous commit
+	s.AddTool(
+		mcp.NewTool("lgh_rollback",
+			mcp.WithDescription("Rollback the repository to a previous commit. This performs a git reset --hard and optionally force pushes to LGH."),
+			mcp.WithString("path",
+				mcp.Description("Absolute path to the LOCAL working directory (defaults to current directory)"),
+			),
+			mcp.WithNumber("steps",
+				mcp.Description("Number of commits to roll back (default: 1)"),
+			),
+			mcp.WithBoolean("push",
+				mcp.Description("Force push to LGH after rollback (default: false)"),
+			),
+		),
+		handleRollback,
 	)
 }
 

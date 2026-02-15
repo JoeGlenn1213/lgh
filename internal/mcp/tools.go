@@ -293,6 +293,80 @@ func handleServeStop(ctx context.Context, _ mcp.CallToolRequest) (*mcp.CallToolR
 	return mcp.NewToolResultText(string(output)), nil
 }
 
+func handleRollback(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	params := getArgsMap(request)
+	path := getString(params, "path")
+	steps := getFloat(params, "steps")
+	push := getBool(params, "push")
+
+	if steps <= 0 {
+		steps = 1
+	}
+
+	// Default to current directory
+	workDir := path
+	if workDir == "" {
+		var err error
+		workDir, err = os.Getwd()
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Failed to get current directory: %v", err)), nil
+		}
+	}
+
+	// Get current commit before rollback
+	cmd := exec.CommandContext(ctx, "git", "-C", workDir, "rev-parse", "HEAD")
+	output, err := cmd.Output()
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to get current commit: %v", err)), nil
+	}
+	beforeCommit := strings.TrimSpace(string(output))
+
+	// Get target commit (N steps back)
+	cmd = exec.CommandContext(ctx, "git", "-C", workDir, "rev-parse", fmt.Sprintf("HEAD~%d", int(steps)))
+	output, err = cmd.Output()
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to find commit %d steps back: %v", int(steps), err)), nil
+	}
+	targetCommit := strings.TrimSpace(string(output))
+
+	// Get commit message for info
+	cmd = exec.CommandContext(ctx, "git", "-C", workDir, "log", "-1", "--format=%s", beforeCommit)
+	msgOutput, _ := cmd.Output()
+	rollbackMsg := strings.TrimSpace(string(msgOutput))
+
+	// Perform git reset --hard
+	cmd = exec.CommandContext(ctx, "git", "-C", workDir, "reset", "--hard", targetCommit)
+	resetOutput, err := cmd.CombinedOutput()
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to reset: %s", string(resetOutput))), nil
+	}
+
+	result := map[string]interface{}{
+		"success":       true,
+		"from_commit":   beforeCommit,
+		"to_commit":     targetCommit,
+		"steps":         int(steps),
+		"rolled_back":   rollbackMsg,
+		"local_changed": true,
+	}
+
+	// Optionally push to LGH (force push required)
+	if push {
+		cmd = exec.CommandContext(ctx, "git", "-C", workDir, "push", "lgh", "--force")
+		pushOutput, pushErr := cmd.CombinedOutput()
+		if pushErr != nil {
+			result["push_success"] = false
+			result["push_error"] = string(pushOutput)
+		} else {
+			result["push_success"] = true
+			result["remote_changed"] = true
+		}
+	}
+
+	data, _ := json.MarshalIndent(result, "", "  ")
+	return mcp.NewToolResultText(string(data)), nil
+}
+
 func handleLog(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	params := getArgsMap(request)
 	limit := getFloat(params, "limit")
