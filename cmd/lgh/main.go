@@ -55,6 +55,7 @@ FEATURES:
   • Built-in authentication for secure sharing
   • mDNS discovery for LAN access
   • Easy tunnel integration for remote access
+  • MCP server for AI assistant integration
 
 QUICK START:
   $ lgh init              # Initialize LGH environment
@@ -73,6 +74,14 @@ COMMON OPTIONS:
   $ lgh serve --bind 0.0.0.0    # Allow LAN access
   $ lgh serve --read-only       # Disable push
   $ lgh auth setup              # Enable authentication
+
+WITH ACTIOND (CI/CD):
+  $ lgh serve -d          # Start LGH server
+  $ actiond start -d      # Start ActionD for CI/CD
+  $ git push lgh main     # Push triggers plugins automatically
+
+AI INTEGRATION:
+  $ lgh mcp               # Start MCP server for Claude/AI
 
 For more information, visit: https://github.com/JoeGlenn1213/lgh`,
 	Version: Version,
