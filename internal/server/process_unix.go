@@ -52,7 +52,7 @@ func checkProcessRunning(pid int) bool {
 // isLGHProcess checks if the given PID is an LGH process using ps
 func isLGHProcess(pid int) bool {
 	// nolint:gosec // G204: Subprocess launched with a potential tainted input. pid is a trusted integer.
-	cmd := exec.Command("ps", "-p", strconv.Itoa(pid), "-o", "comm=")
+	cmd := exec.Command("ps", "-p", strconv.Itoa(pid), "-o", "args=")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {
