@@ -143,12 +143,13 @@ func runDoctor(_ *cobra.Command, _ []string) error {
 
 		// Check if port is free
 		address := fmt.Sprintf("%s:%d", cfg.BindAddress, cfg.Port)
-		ln, lnErr := net.Listen("tcp", address)
-		if lnErr != nil {
-			ui.Warning("! Port %d seems to be in use by another process", cfg.Port)
-		} else {
-			_ = ln.Close()
-			ui.Success("Port %d is available", cfg.Port)
+			ln, lnErr := net.Listen("tcp", address)
+			if lnErr != nil {
+				ui.Warning("! Port %d seems to be in use by another process", cfg.Port)
+				hasIssues = true
+			} else {
+				_ = ln.Close()
+				ui.Success("Port %d is available", cfg.Port)
 		}
 	}
 	fmt.Println()
