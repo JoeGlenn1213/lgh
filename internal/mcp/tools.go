@@ -24,10 +24,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
 
@@ -217,19 +219,57 @@ func handleUp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolRe
 
 	// Extract commit hash and job IDs if possible (ActionD integration)
 	// We'll parse the output to find any mentioned job IDs
+	var commitHash string
 	if err == nil {
 		lines := strings.Split(string(output), "\n")
 		for _, line := range lines {
 			if strings.Contains(line, "commit ") {
 				parts := strings.Split(strings.TrimSpace(line), " ")
 				if len(parts) >= 2 {
-					result["commit"] = parts[1]
+					commitHash = parts[1]
+					result["commit"] = commitHash
 				}
 			}
 		}
 
-		// In a real implementation, LGH would communicate with ActionD to get the exact job IDs triggered
-		// For now we add a placeholder that the AI can use to know it should wait
+		// Query ActionD via HTTP API to get exact job IDs triggered by this commit
+		if commitHash != "" {
+			// Small delay to allow ActionD to process the git push event and insert jobs
+			time.Sleep(500 * time.Millisecond)
+
+			// Get recent actions from ActionD
+			client := http.Client{Timeout: 2 * time.Second}
+			resp, httpErr := client.Get("http://localhost:3000/api/actions?limit=10")
+			if httpErr == nil {
+				defer resp.Body.Close()
+				if resp.StatusCode == http.StatusOK {
+					var jobs []map[string]interface{}
+					if decodeErr := json.NewDecoder(resp.Body).Decode(&jobs); decodeErr == nil {
+						var triggeredJobIDs []string
+						// Match jobs by checking if commit hash is present in the job details
+						// In ActionD's /api/actions response, it might not have commit directly,
+						// but they were just created. We filter jobs created very recently for this repo.
+						// A more precise way is to fetch each job detail or rely on ActionD's commit field.
+						// We'll collect jobs created within the last few seconds.
+						now := time.Now()
+						for _, job := range jobs {
+							createdAtStr, _ := job["created_at"].(string)
+							createdAt, _ := time.Parse(time.RFC3339, createdAtStr)
+							if now.Sub(createdAt) < 5*time.Second {
+								if id, ok := job["id"].(string); ok {
+									triggeredJobIDs = append(triggeredJobIDs, id)
+								}
+							}
+						}
+						if len(triggeredJobIDs) > 0 {
+							result["triggered_job_ids"] = triggeredJobIDs
+						}
+					}
+				}
+			}
+		}
+
+		// Keep the hint for backward compatibility
 		result["triggered_jobs_hint"] = "Jobs may have been triggered in ActionD. Use dev_cycle_run instead for full tracing."
 	}
 

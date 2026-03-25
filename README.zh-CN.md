@@ -151,7 +151,7 @@ LGH 提供了一套智能的代码存档工具，特别适合配合 AI 编程助
   - 自动检测项目类型（Python、Go、Node、Java、Rust、AI/ML）并生成对应的 `.gitignore`
   - 自动检测并阻止提交超大文件(>50MB)或敏感文件（.env、*.key）
   - 执行 `git add .`、`git commit` 和 `git push`
-  - **(v1.2.2+)** 配合 MCP 使用时，返回结果中会包含 `triggered_jobs_hint`，提示 AI 追踪 ActionD 中的流水线状态
+  - **(v1.2.3+)** 配合 MCP 使用时，返回结果中会包含精确的 `triggered_job_ids: [...]` 数组，让 AI 实现零盲区的状态追踪
 
 - **`lgh save "msg"`**：本地存档
   - 类似 `up`，但只提交不推送，适合频繁的本地小步迭代

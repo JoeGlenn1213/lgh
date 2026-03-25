@@ -161,7 +161,7 @@ lgh save "WIP: work in progress"
 - Detects project type (Python, Go, Node, Java, Rust, AI/ML)
 - Generates appropriate `.gitignore` file
 - Blocks large files (>50MB) and sensitive files (.env, *.key)
-- **(v1.2.2+)** When used via MCP, returns `triggered_jobs_hint` to prompt AI to track ActionD pipeline jobs
+- **(v1.2.3+)** When used via MCP, returns exact `triggered_job_ids: [...]` array, allowing AI to track pipeline status with zero blind spots
 
 ### 5. Push Code
 After adding, you can use standard Git commands:
