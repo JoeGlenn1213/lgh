@@ -145,20 +145,16 @@ git push -u lgh main
 
 ### 5. 智能存档 (v1.2.0+)
 
-备份和同步代码最快的方式：
+LGH 提供了一套智能的代码存档工具，特别适合配合 AI 编程助手使用：
 
-```bash
-# 一键起飞：自动 .gitignore + add + commit + push
-lgh up "提交信息"
+- **`lgh up "msg"`**：一键存档并推送
+  - 自动检测项目类型（Python、Go、Node、Java、Rust、AI/ML）并生成对应的 `.gitignore`
+  - 自动检测并阻止提交超大文件(>50MB)或敏感文件（.env、*.key）
+  - 执行 `git add .`、`git commit` 和 `git push`
+  - **(v1.2.2+)** 配合 MCP 使用时，返回结果中会包含 `triggered_jobs_hint`，提示 AI 追踪 ActionD 中的流水线状态
 
-# 本地存档（不推送）
-lgh save "WIP: 工作进行中"
-```
-
-**智能忽略** 自动：
-- 检测项目类型（Python、Go、Node、Java、Rust、AI/ML）
-- 生成合适的 `.gitignore` 文件
-- 阻止大文件（>50MB）和敏感文件（.env、*.key）
+- **`lgh save "msg"`**：本地存档
+  - 类似 `up`，但只提交不推送，适合频繁的本地小步迭代
 
 ### 5. 推送代码
 添加完成后，使用标准 Git 命令即可：

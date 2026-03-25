@@ -214,6 +214,25 @@ func handleUp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolRe
 		"output":       string(output),
 		"project_type": string(projectType),
 	}
+
+	// Extract commit hash and job IDs if possible (ActionD integration)
+	// We'll parse the output to find any mentioned job IDs
+	if err == nil {
+		lines := strings.Split(string(output), "\n")
+		for _, line := range lines {
+			if strings.Contains(line, "commit ") {
+				parts := strings.Split(strings.TrimSpace(line), " ")
+				if len(parts) >= 2 {
+					result["commit"] = parts[1]
+				}
+			}
+		}
+
+		// In a real implementation, LGH would communicate with ActionD to get the exact job IDs triggered
+		// For now we add a placeholder that the AI can use to know it should wait
+		result["triggered_jobs_hint"] = "Jobs may have been triggered in ActionD. Use dev_cycle_run instead for full tracing."
+	}
+
 	if err != nil {
 		result["error"] = err.Error()
 	}
