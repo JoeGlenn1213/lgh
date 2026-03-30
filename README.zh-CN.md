@@ -190,7 +190,7 @@ git clone http://127.0.0.1:9418/your-project.git
 | `lgh remote use` | 切换当前使用的远程 | `lgh remote use lgh` |
 | `lgh clone` | 快速克隆 | `lgh clone repo-name` |
 | `lgh events` | 查看/监听系统日志 | `lgh events -n 20 --watch` |
-| `lgh up` | 一键提交并推送 | `lgh up "信息"` |
+| `lgh up` | 一键提交并推送 (MCP 调用时返回 ActionD triggered_job_ids) | `lgh up "信息"` |
 | `lgh save` | 本地存档（不推送） | `lgh save "WIP"` |
 | `lgh log` | 查看服务日志 | `lgh log --level ERROR` |
 | `lgh mcp` | 启动 MCP 服务器 | `lgh mcp` |

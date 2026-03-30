@@ -95,7 +95,7 @@ func registerTools(s *server.MCPServer) {
 	// lgh_up - One-click commit and push
 	s.AddTool(
 		mcp.NewTool("lgh_up",
-			mcp.WithDescription("One-click backup: auto .gitignore + git add + git commit + git push to LGH local server. NOT GitHub/GitLab - this pushes to localhost LGH."),
+			mcp.WithDescription("One-click backup: auto .gitignore + git add + git commit + git push to LGH local server. NOT GitHub/GitLab - this pushes to localhost LGH. If ActionD is running, it will automatically return the list of triggered job IDs (triggered_job_ids) that were spawned by this push."),
 			mcp.WithString("message",
 				mcp.Required(),
 				mcp.Description("Git commit message"),

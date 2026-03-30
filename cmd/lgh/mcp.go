@@ -54,7 +54,7 @@ Tools available via MCP:
   - lgh_list: List repositories
   - lgh_add: Add repository
   - lgh_remove: Remove repository
-  - lgh_up: One-click commit and push
+  - lgh_up: One-click commit and push (returns triggered_job_ids if ActionD is running)
   - lgh_save: Local save
   - lgh_serve_start/stop: Server control
   - lgh_log: View server logs

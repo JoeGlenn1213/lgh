@@ -218,28 +218,24 @@ func handleUp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolRe
 	}
 
 	// Extract commit hash and job IDs if possible (ActionD integration)
-	// We'll parse the output to find any mentioned job IDs
 	var commitHash string
 	if err == nil {
-		lines := strings.Split(string(output), "\n")
-		for _, line := range lines {
-			if strings.Contains(line, "commit ") {
-				parts := strings.Split(strings.TrimSpace(line), " ")
-				if len(parts) >= 2 {
-					commitHash = parts[1]
-					result["commit"] = commitHash
-				}
-			}
+		cmdHash := exec.CommandContext(ctx, "git", "rev-parse", "HEAD")
+		cmdHash.Dir = workDir
+		if hashOut, hashErr := cmdHash.Output(); hashErr == nil {
+			commitHash = strings.TrimSpace(string(hashOut))
+			result["commit"] = commitHash
 		}
 
 		// Query ActionD via HTTP API to get exact job IDs triggered by this commit
 		if commitHash != "" {
-			// Small delay to allow ActionD to process the git push event and insert jobs
-			time.Sleep(500 * time.Millisecond)
+			// Delay to allow ActionD to process the git push event and insert jobs
+			// 1.5 seconds is usually enough for the socket event to trigger the worker
+			time.Sleep(3 * time.Second)
 
 			// Get recent actions from ActionD
-			client := http.Client{Timeout: 2 * time.Second}
-			resp, httpErr := client.Get("http://localhost:3000/api/actions?limit=10")
+			client := http.Client{Timeout: 3 * time.Second}
+			resp, httpErr := client.Get("http://localhost:3000/api/actions?limit=15")
 			if httpErr == nil {
 				defer resp.Body.Close()
 				if resp.StatusCode == http.StatusOK {
@@ -251,16 +247,61 @@ func handleUp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolRe
 						// but they were just created. We filter jobs created very recently for this repo.
 						// A more precise way is to fetch each job detail or rely on ActionD's commit field.
 						// We'll collect jobs created within the last few seconds.
-						now := time.Now()
 						for _, job := range jobs {
-							createdAtStr, _ := job["created_at"].(string)
-							createdAt, _ := time.Parse(time.RFC3339, createdAtStr)
-							if now.Sub(createdAt) < 5*time.Second {
+							// Check if commit_sha matches directly if available
+							sha, shaOk := job["commit_sha"].(string)
+
+							if shaOk && sha != "" && commitHash != "" && strings.HasPrefix(sha, commitHash) {
 								if id, ok := job["id"].(string); ok {
+									triggeredJobIDs = append(triggeredJobIDs, id)
+								}
+								continue
+							}
+							// Some plugins in ActionD extract the commit info into `commit` nested object
+							if commitObj, ok := job["commit"].(map[string]interface{}); ok {
+								if hash, ok := commitObj["hash"].(string); ok && hash != "" && commitHash != "" && strings.HasPrefix(hash, commitHash) {
+									if id, ok := job["id"].(string); ok {
+										triggeredJobIDs = append(triggeredJobIDs, id)
+									}
+									continue
+								}
+							}
+						}
+
+						// If we found exact matches via commit SHA, we are done
+						// Try to fetch by repo name as fallback ONLY if we found NO matches by SHA
+						if len(triggeredJobIDs) == 0 && len(jobs) > 0 {
+							now := time.Now().UTC()
+							// Find jobs created within the last 60 seconds for the current repo
+							for _, job := range jobs {
+								createdAtStr, _ := job["created_at"].(string)
+								createdAt, err := time.Parse(time.RFC3339Nano, createdAtStr)
+								if err != nil {
+									createdAt, _ = time.Parse(time.RFC3339, createdAtStr)
+								}
+
+								repoName, _ := job["repo"].(string)
+
+								diff := now.Sub(createdAt.UTC())
+								if diff < 0 {
+									diff = -diff
+								}
+								// Only consider it a match if it's within the last minute AND matches the repo name
+								if diff < 60*time.Second && strings.Contains(workDir, strings.TrimSuffix(repoName, ".git")) {
+									if id, ok := job["id"].(string); ok {
+										triggeredJobIDs = append(triggeredJobIDs, id)
+									}
+								}
+							}
+
+							// If STILL empty after repo matching, just grab the most recent job as a last resort
+							if len(triggeredJobIDs) == 0 && len(jobs) > 0 {
+								if id, ok := jobs[0]["id"].(string); ok {
 									triggeredJobIDs = append(triggeredJobIDs, id)
 								}
 							}
 						}
+
 						if len(triggeredJobIDs) > 0 {
 							result["triggered_job_ids"] = triggeredJobIDs
 						}

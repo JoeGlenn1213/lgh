@@ -197,7 +197,7 @@ git clone http://127.0.0.1:9418/your-project.git
 | `lgh remote use` | Switch active remote | `lgh remote use lgh` |
 | `lgh clone` | Simple clone from LGH | `lgh clone repo-name` |
 | `lgh events` | View/watch system event logs | `lgh events -n 20 --watch` |
-| `lgh up` | One-click commit and push | `lgh up "message"` |
+| `lgh up` | One-click commit and push (MCP returns ActionD triggered_job_ids) | `lgh up "message"` |
 | `lgh save` | Local save (no push) | `lgh save "WIP"` |
 | `lgh log` | View server logs | `lgh log --level ERROR` |
 | `lgh mcp` | Start MCP server for AI | `lgh mcp` |
