@@ -178,9 +178,25 @@ func (b *Backend) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 				// Emit branch push event
 				if len(branchChanges) > 0 {
-					event.Publish(event.GitPush, repoPath, map[string]interface{}{
+					// Calculate changed files for each updated ref
+					changedFiles := make(map[string][]string)
+					for ref, change := range branchChanges {
+						if change["action"] == "updated" || change["action"] == "created" {
+							files, err := GetChangedFiles(fullRepoPath, change["old"], change["new"])
+							if err == nil && len(files) > 0 {
+								changedFiles[ref] = files
+							}
+						}
+					}
+
+					payload := map[string]interface{}{
 						"changes": branchChanges,
-					})
+					}
+					if len(changedFiles) > 0 {
+						payload["changed_files"] = changedFiles
+					}
+
+					event.Publish(event.GitPush, repoPath, payload)
 				}
 
 				// Emit tag event

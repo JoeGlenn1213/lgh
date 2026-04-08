@@ -1,5 +1,39 @@
 # LGH 本地开发日志
 
+## v1.3.0 (2026-04-08) - CI/CD Integration
+
+### New Features
+
+- **Push 元数据增强**: push 事件新增 `changed_files` 字段
+  - 自动计算两个 commit 之间的文件变更列表
+  - ActionD 可用于路径过滤，只触发相关插件
+
+- **Commit Status API**: CI 状态回写
+  - `GET /api/repos/{repo}/commits/{sha}/status` - 查询 CI 状态
+  - `POST /api/repos/{repo}/commits/{sha}/status` - 写入 CI 状态
+  - 支持 per-plugin 状态聚合
+
+- **Status Storage**: 基于 JSON 文件的 commit 状态存储
+  - `internal/git/status.go` - CommitStatus 结构体
+  - 自动聚合整体状态 (pending/success/failure/error)
+
+### Modified Files
+
+| 文件 | 变更 |
+|------|------|
+| `internal/git/refs.go` | GetChangedFiles() 函数 |
+| `internal/git/backend.go` | push 事件添加 changed_files |
+| `internal/git/status.go` | 新建 CommitStatus 存储 |
+| `internal/server/server.go` | /api/repos 路由 + status API |
+
+### Integration
+
+配合 ActionD v1.2.0 实现：
+- 每次 push jobs: 15 → 3-5 (profile=fast)
+- CI 结果可查询、可追溯
+
+---
+
 ## v1.2.0 (2026-01-11) - Smart Archival System
 
 ### New Features

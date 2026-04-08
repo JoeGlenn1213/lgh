@@ -49,3 +49,37 @@ func GetRefs(repoPath string) (map[string]string, error) {
 	}
 	return refs, nil
 }
+
+// GetChangedFiles returns the list of files changed between two commits.
+// For created refs, oldHash should be the empty tree hash or parent of first commit.
+// For deleted refs, returns empty slice.
+func GetChangedFiles(repoPath, oldHash, newHash string) ([]string, error) {
+	// Handle deletion - no files to report
+	if newHash == "" || newHash == "0000000000000000000000000000000000000000" {
+		return []string{}, nil
+	}
+
+	// Handle creation - diff against empty tree or use --root
+	var cmd *exec.Cmd
+	if oldHash == "" || oldHash == "0000000000000000000000000000000000000000" {
+		// New branch/tag - diff against empty tree or show all files in first commit
+		cmd = exec.Command("git", "-C", repoPath, "diff-tree", "--no-commit-id", "--name-only", "-r", newHash)
+	} else {
+		// Updated branch - diff between old and new
+		cmd = exec.Command("git", "-C", repoPath, "diff", "--name-only", oldHash, newHash)
+	}
+
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	files := strings.Split(strings.TrimSpace(string(output)), "\n")
+	result := make([]string, 0, len(files))
+	for _, f := range files {
+		if f != "" {
+			result = append(result, f)
+		}
+	}
+	return result, nil
+}

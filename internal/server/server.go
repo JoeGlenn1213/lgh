@@ -42,15 +42,17 @@ import (
 
 // Server represents the LGH HTTP server
 type Server struct {
-	cfg        *config.Config
-	httpServer *http.Server
+	cfg         *config.Config
+	httpServer  *http.Server
+	statusStore *git.StatusStore
 }
 
 // New creates a new LGH server instance
 // ReadOnly mode is now taken from cfg.ReadOnly for consistency
 func New(cfg *config.Config) *Server {
 	return &Server{
-		cfg: cfg,
+		cfg:         cfg,
+		statusStore: git.NewStatusStore(cfg.DataDir),
 	}
 }
 
@@ -102,6 +104,10 @@ func (s *Server) Start() error {
 	// Allows replaying/injecting events via HTTP (Localhost only recommended)
 	// Takes a JSON event body and broadcasts it via the Broker.
 	mux.HandleFunc("/debug/events", s.handleDebugEvents)
+
+	// Commit Status API (v1.2.0)
+	// GET/POST /api/repos/{repo}/commits/{sha}/status
+	mux.HandleFunc("/api/repos/", s.handleAPIRepos)
 
 	// Git backend for all .git paths
 	mux.Handle("/", handler)
@@ -365,4 +371,74 @@ func (s *Server) handleDebugEvents(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte(`{"status":"ok"}`))
+}
+
+// handleAPIRepos routes /api/repos/{repo}/commits/{sha}/status requests
+func (s *Server) handleAPIRepos(w http.ResponseWriter, r *http.Request) {
+	// Parse path: /api/repos/{repo}/commits/{sha}/status
+	path := strings.TrimPrefix(r.URL.Path, "/api/repos/")
+	parts := strings.Split(path, "/")
+	
+	// Expected: {repo}/commits/{sha}/status
+	if len(parts) < 4 || parts[1] != "commits" || parts[3] != "status" {
+		http.Error(w, "invalid path, expected /api/repos/{repo}/commits/{sha}/status", http.StatusBadRequest)
+		return
+	}
+	
+	repo := parts[0]
+	sha := parts[2]
+	
+	s.handleCommitStatus(w, r, repo, sha)
+}
+
+// handleCommitStatus handles GET/POST for commit status
+func (s *Server) handleCommitStatus(w http.ResponseWriter, r *http.Request, repo, sha string) {
+	switch r.Method {
+	case http.MethodGet:
+		report, err := s.statusStore.Get(repo, sha)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte(`{"error":"status not found"}`))
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(report)
+		
+	case http.MethodPost:
+		var status git.CommitStatus
+		if err := json.NewDecoder(r.Body).Decode(&status); err != nil {
+			http.Error(w, "invalid JSON body", http.StatusBadRequest)
+			return
+		}
+		
+		// Validate
+		status.CommitSHA = sha
+		if status.Status == "" {
+			status.Status = "pending"
+		}
+		validStatuses := map[string]bool{
+			"pending": true, "success": true, "failure": true, "error": true, "cancelled": true,
+		}
+		if !validStatuses[status.Status] {
+			http.Error(w, "invalid status, must be one of: pending, success, failure, error, cancelled", http.StatusBadRequest)
+			return
+		}
+		
+		if err := s.statusStore.Update(repo, sha, status); err != nil {
+			http.Error(w, fmt.Sprintf("failed to update status: %v", err), http.StatusInternalServerError)
+			return
+		}
+		
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]string{
+			"status":  "updated",
+			"repo":    repo,
+			"commit":  sha,
+			"plugin":  status.Plugin,
+			"result":  status.Status,
+		})
+		
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
 }
