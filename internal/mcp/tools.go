@@ -21,6 +21,7 @@
 package mcp
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -34,6 +35,7 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 
 	"github.com/JoeGlenn1213/lgh/internal/config"
+	"github.com/JoeGlenn1213/lgh/internal/event"
 	"github.com/JoeGlenn1213/lgh/internal/ignore"
 	"github.com/JoeGlenn1213/lgh/internal/registry"
 	"github.com/JoeGlenn1213/lgh/internal/server"
@@ -227,85 +229,17 @@ func handleUp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolRe
 			result["commit"] = commitHash
 		}
 
-		// Query ActionD via HTTP API to get exact job IDs triggered by this commit
+		// Query ActionD via event_id for precise job matching (no more sleep+guess)
+		// LGH events carry a UUID that ActionD stores as event_id on each job.
+		// We extract the event_id from the LGH event log for this commit.
 		if commitHash != "" {
-			// Delay to allow ActionD to process the git push event and insert jobs
-			// 1.5 seconds is usually enough for the socket event to trigger the worker
-			time.Sleep(3 * time.Second)
-
-			// Get recent actions from ActionD
-			client := http.Client{Timeout: 3 * time.Second}
-			resp, httpErr := client.Get("http://localhost:3000/api/actions?limit=15")
-			if httpErr == nil {
-				defer resp.Body.Close()
-				if resp.StatusCode == http.StatusOK {
-					var jobs []map[string]interface{}
-					if decodeErr := json.NewDecoder(resp.Body).Decode(&jobs); decodeErr == nil {
-						var triggeredJobIDs []string
-						// Match jobs by checking if commit hash is present in the job details
-						// In ActionD's /api/actions response, it might not have commit directly,
-						// but they were just created. We filter jobs created very recently for this repo.
-						// A more precise way is to fetch each job detail or rely on ActionD's commit field.
-						// We'll collect jobs created within the last few seconds.
-						for _, job := range jobs {
-							// Check if commit_sha matches directly if available
-							sha, shaOk := job["commit_sha"].(string)
-
-							if shaOk && sha != "" && commitHash != "" && strings.HasPrefix(sha, commitHash) {
-								if id, ok := job["id"].(string); ok {
-									triggeredJobIDs = append(triggeredJobIDs, id)
-								}
-								continue
-							}
-							// Some plugins in ActionD extract the commit info into `commit` nested object
-							if commitObj, ok := job["commit"].(map[string]interface{}); ok {
-								if hash, ok := commitObj["hash"].(string); ok && hash != "" && commitHash != "" && strings.HasPrefix(hash, commitHash) {
-									if id, ok := job["id"].(string); ok {
-										triggeredJobIDs = append(triggeredJobIDs, id)
-									}
-									continue
-								}
-							}
-						}
-
-						// If we found exact matches via commit SHA, we are done
-						// Try to fetch by repo name as fallback ONLY if we found NO matches by SHA
-						if len(triggeredJobIDs) == 0 && len(jobs) > 0 {
-							now := time.Now().UTC()
-							// Find jobs created within the last 60 seconds for the current repo
-							for _, job := range jobs {
-								createdAtStr, _ := job["created_at"].(string)
-								createdAt, err := time.Parse(time.RFC3339Nano, createdAtStr)
-								if err != nil {
-									createdAt, _ = time.Parse(time.RFC3339, createdAtStr)
-								}
-
-								repoName, _ := job["repo"].(string)
-
-								diff := now.Sub(createdAt.UTC())
-								if diff < 0 {
-									diff = -diff
-								}
-								// Only consider it a match if it's within the last minute AND matches the repo name
-								if diff < 60*time.Second && strings.Contains(workDir, strings.TrimSuffix(repoName, ".git")) {
-									if id, ok := job["id"].(string); ok {
-										triggeredJobIDs = append(triggeredJobIDs, id)
-									}
-								}
-							}
-
-							// If STILL empty after repo matching, just grab the most recent job as a last resort
-							if len(triggeredJobIDs) == 0 && len(jobs) > 0 {
-								if id, ok := jobs[0]["id"].(string); ok {
-									triggeredJobIDs = append(triggeredJobIDs, id)
-								}
-							}
-						}
-
-						if len(triggeredJobIDs) > 0 {
-							result["triggered_job_ids"] = triggeredJobIDs
-						}
-					}
+			eventID := findEventIDForCommit(commitHash, workDir)
+			if eventID != "" {
+				result["event_id"] = eventID
+				// Poll ActionD by event_id — much more reliable than sleep+substring
+				triggeredJobIDs := pollActionDByEventID(eventID, 10*time.Second)
+				if len(triggeredJobIDs) > 0 {
+					result["triggered_job_ids"] = triggeredJobIDs
 				}
 			}
 		}
@@ -501,6 +435,109 @@ func getLGHCmd(ctx context.Context, args ...string) (*exec.Cmd, error) {
 	}
 	//nolint:gosec // G204: exe is trusted (os.Executable), args are commands
 	return exec.CommandContext(ctx, exe, args...), nil
+}
+
+// findEventIDForCommit reads the LGH event log to find the event_id for a given commit hash.
+// Events are stored as JSONL in ~/.localgithub/events/events.jsonl
+func findEventIDForCommit(commitHash, workDir string) string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	eventLogPath := filepath.Join(home, ".localgithub", "events", "events.jsonl")
+	f, err := os.Open(eventLogPath)
+	if err != nil {
+		return ""
+	}
+	defer f.Close()
+
+	// Get repo name from workDir
+	repoName := filepath.Base(workDir)
+
+	// Read from the end (most recent events first) — scan last 50 lines
+	var lines []string
+	scanner := bufio.NewScanner(f)
+	scanner.Buffer(make([]byte, 256*1024), 256*1024)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+
+	// Search from end for a matching push event
+	start := len(lines) - 50
+	if start < 0 {
+		start = 0
+	}
+	for i := len(lines) - 1; i >= start; i-- {
+		var evt event.Event
+		if json.Unmarshal([]byte(lines[i]), &evt) != nil {
+			continue
+		}
+		if evt.Type != event.GitPush {
+			continue
+		}
+		// Match by repo name
+		if evt.RepoName != repoName+".git" && evt.RepoName != repoName {
+			continue
+		}
+		// Check if this event's changes contain our commit hash
+		if payload, ok := evt.Payload["changes"].(map[string]interface{}); ok {
+			for _, change := range payload {
+				if changeMap, ok := change.(map[string]interface{}); ok {
+					newHash, _ := changeMap["new"].(string)
+					if strings.HasPrefix(newHash, commitHash) || strings.HasPrefix(commitHash, newHash) {
+						return evt.ID
+					}
+				}
+			}
+		}
+	}
+	return ""
+}
+
+// pollActionDByEventID polls ActionD's /api/actions/by-event/{event_id} endpoint
+// until all jobs reach terminal state or timeout. Returns job IDs.
+func pollActionDByEventID(eventID string, timeout time.Duration) []string {
+	client := http.Client{Timeout: 3 * time.Second}
+	deadline := time.Now().Add(timeout)
+	var jobIDs []string
+
+	for time.Now().Before(deadline) {
+		resp, err := client.Get(fmt.Sprintf("http://localhost:3000/api/actions/by-event/%s", eventID))
+		if err != nil {
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+
+		var jobs []map[string]interface{}
+		json.NewDecoder(resp.Body).Decode(&jobs)
+		resp.Body.Close()
+
+		if len(jobs) == 0 {
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+
+		// Collect job IDs
+		jobIDs = make([]string, 0, len(jobs))
+		allTerminal := true
+		for _, j := range jobs {
+			if id, ok := j["id"].(string); ok {
+				jobIDs = append(jobIDs, id)
+			}
+			status, _ := j["status"].(string)
+			if status != "done" && status != "failed" && status != "cancelled" {
+				allTerminal = false
+			}
+		}
+
+		if allTerminal {
+			return jobIDs
+		}
+
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	return jobIDs
 }
 
 // Resource Handlers

@@ -45,6 +45,12 @@ type Server struct {
 	cfg         *config.Config
 	httpServer  *http.Server
 	statusStore *git.StatusStore
+	onReady     func() // Called after IPC socket is ready, before ListenAndServe
+}
+
+// SetOnReady sets a callback that runs after the IPC socket is created
+func (s *Server) SetOnReady(fn func()) {
+	s.onReady = fn
 }
 
 // New creates a new LGH server instance
@@ -147,6 +153,11 @@ func (s *Server) Start() error {
 
 	// Start IPC Listener (v1.1.0)
 	s.startIPC()
+
+	// Fire onReady callback (e.g., auto-start ActionD)
+	if s.onReady != nil {
+		s.onReady()
+	}
 
 	// Start server
 	log.Info("Server started successfully")

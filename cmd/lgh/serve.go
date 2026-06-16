@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
@@ -144,6 +145,12 @@ func runServe(_ *cobra.Command, _ []string) error {
 
 	// Create and start server using cfg.ReadOnly (respects config.yaml)
 	srv := server.New(cfg)
+
+	// Auto-start ActionD after LGH socket is ready (best-effort)
+	srv.SetOnReady(func() {
+		tryStartActionD()
+	})
+
 	return srv.Start()
 }
 
@@ -163,7 +170,8 @@ func startDaemon(cfg *config.Config) error {
 		args = append(args, "--mdns")
 	}
 
-	// Get executable path
+	// Get executable path — use os.Executable() to ensure the child daemon
+	// runs the exact same binary as the parent (avoids PATH picking up stale copies)
 	executable, err := os.Executable()
 	if err != nil {
 		return fmt.Errorf("failed to get executable path: %w", err)
@@ -188,5 +196,65 @@ func startDaemon(cfg *config.Config) error {
 	ui.Info("Use 'lgh stop' to stop the server")
 	ui.Info("Use 'lgh status' to check server status")
 
+	// ActionD auto-start is handled by the foreground serve path (goroutine with delay)
+	// In daemon mode, the child process will handle it via the same goroutine.
+
 	return nil
+}
+
+// tryStartActionD checks if ActionD is available and starts it if not already running.
+// Tries PATH → ~/.local/bin → repo binary. Validates each candidate before use.
+// Failures are logged to stderr but never block LGH startup.
+func tryStartActionD() {
+	// Collect candidate paths in priority order
+	var candidates []string
+	if path, err := exec.LookPath("actiond"); err == nil {
+		candidates = append(candidates, path)
+	}
+	home, homeErr := os.UserHomeDir()
+	if homeErr == nil {
+		candidates = append(candidates,
+			filepath.Join(home, ".local", "bin", "actiond"),
+			filepath.Join(home, "neil", "LocalGitHub", "ActionD", "actiond"),
+		)
+	}
+
+	// Find first working binary (version exits 0)
+	var actiondPath string
+	for _, candidate := range candidates {
+		if _, statErr := os.Stat(candidate); statErr != nil {
+			continue
+		}
+		// #nosec G204 -- candidate is a trusted path
+		check := exec.Command(candidate, "version")
+		if check.Run() == nil {
+			actiondPath = candidate
+			break
+		}
+		// Binary exists but can't execute (macOS SIGKILL / code signing) — skip
+	}
+	if actiondPath == "" {
+		return // No working ActionD binary found
+	}
+
+	// Check if ActionD is already running via its PID file
+	pidFile := filepath.Join(home, ".localgithub", "actions", "actiond.pid")
+	data, readErr := os.ReadFile(pidFile)
+	if readErr == nil {
+		pid := 0
+		if _, parseErr := fmt.Sscanf(string(data), "%d", &pid); parseErr == nil && pid > 0 {
+			checkCmd := exec.Command("kill", "-0", fmt.Sprintf("%d", pid))
+			if checkCmd.Run() == nil {
+				return // ActionD is already running
+			}
+		}
+		_ = os.Remove(pidFile)
+	}
+
+	// Start ActionD in daemon mode
+	// #nosec G204 -- actiondPath validated above
+	cmd := exec.Command(actiondPath, "start", "-d")
+	if output, err := cmd.CombinedOutput(); err != nil {
+		fmt.Fprintf(os.Stderr, "[lgh] ActionD auto-start failed: %v (%s)\n", err, string(output))
+	}
 }

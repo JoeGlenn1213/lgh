@@ -21,10 +21,15 @@
 package main
 
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -166,6 +171,9 @@ func runUp(_ *cobra.Command, args []string) {
 	}
 
 	ui.Success("🚀 Done! Changes pushed to LGH")
+
+	// Step 8: Wait for CI results (best-effort, non-blocking on failure)
+	waitAndShowCIResults(cwd)
 }
 
 func isGitRepo(dir string) bool {
@@ -288,4 +296,179 @@ func addRepoToLGH(repoPath, name string, noRemote bool) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+// waitAndShowCIResults polls ActionD for CI results after a push and displays them in the terminal.
+// This is best-effort: if ActionD is not running or the event can't be found, it silently skips.
+func waitAndShowCIResults(cwd string) {
+	// Check if ActionD is reachable
+	client := http.Client{Timeout: 1 * time.Second}
+	resp, err := client.Get("http://localhost:3000/api/actions?limit=1")
+	if err != nil {
+		return // ActionD not running, skip silently
+	}
+	resp.Body.Close()
+
+	// Get commit hash
+	cmd := exec.Command("git", "rev-parse", "HEAD")
+	cmd.Dir = cwd
+	hashOut, err := cmd.Output()
+	if err != nil {
+		return
+	}
+	commitHash := strings.TrimSpace(string(hashOut))
+
+	// Find event_id from LGH event log
+	repoName := filepath.Base(cwd)
+	eventID := findEventIDFromLog(commitHash, repoName)
+	if eventID == "" {
+		return // Can't find event, skip
+	}
+
+	fmt.Println()
+	ui.Info("⏳ Waiting for CI results...")
+
+	// Poll ActionD by event_id
+	deadline := time.Now().Add(60 * time.Second)
+	var jobs []map[string]interface{}
+
+	for time.Now().Before(deadline) {
+		resp, err := client.Get(fmt.Sprintf("http://localhost:3000/api/actions/by-event/%s", eventID))
+		if err != nil {
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		json.NewDecoder(resp.Body).Decode(&jobs)
+		resp.Body.Close()
+
+		if len(jobs) == 0 {
+			time.Sleep(1 * time.Second)
+			continue
+		}
+
+		// Check if all terminal
+		allDone := true
+		for _, j := range jobs {
+			status, _ := j["status"].(string)
+			if status != "done" && status != "failed" && status != "cancelled" {
+				allDone = false
+			}
+		}
+		if allDone {
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
+
+	if len(jobs) == 0 {
+		ui.Info("   (no CI jobs triggered)")
+		return
+	}
+
+	// Display results
+	fmt.Println()
+	fmt.Println("┌─────────────────────────────────────────────────┐")
+	fmt.Println("│  CI Results                                     │")
+	fmt.Println("├─────────────────────────────────────────────────┤")
+
+	allPassed := true
+	for _, j := range jobs {
+		pluginName, _ := j["plugin_name"].(string)
+		if pluginName == "" {
+			pluginName, _ = j["action"].(string)
+		}
+		status, _ := j["status"].(string)
+		progress, _ := j["progress"].(string)
+
+		icon := "⏳"
+		switch status {
+		case "done":
+			icon = "✅"
+		case "failed":
+			icon = "❌"
+			allPassed = false
+		case "cancelled":
+			icon = "🚫"
+			allPassed = false
+		default:
+			allPassed = false
+		}
+
+		line := fmt.Sprintf("│  %s %-20s %s", icon, pluginName, progress)
+		// Pad to box width
+		if len(line) < 49 {
+			line += strings.Repeat(" ", 49-len(line)) + "│"
+		}
+		fmt.Println(line)
+	}
+
+	fmt.Println("└─────────────────────────────────────────────────┘")
+
+	if allPassed {
+		ui.Success("All CI checks passed ✅")
+	} else {
+		ui.Warning("Some CI checks failed — check ActionD web console for details")
+	}
+}
+
+// findEventIDFromLog reads the LGH event JSONL log to find the event_id for a commit+repo
+func findEventIDFromLog(commitHash, repoName string) string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	eventLogPath := filepath.Join(home, ".localgithub", "events", "events.jsonl")
+	f, err := os.Open(eventLogPath)
+	if err != nil {
+		return ""
+	}
+	defer f.Close()
+
+	// Read all lines using bufio.Reader (more reliable than Scanner for large files)
+	var lines []string
+	reader := bufio.NewReader(f)
+	for {
+		line, readErr := reader.ReadString('\n')
+		line = strings.TrimSpace(line)
+		if line != "" {
+			lines = append(lines, line)
+		}
+		if readErr != nil {
+			break
+		}
+	}
+
+	// Search from end (most recent first)
+	start := len(lines) - 50
+	if start < 0 {
+		start = 0
+	}
+	for i := len(lines) - 1; i >= start; i-- {
+		var evt struct {
+			ID      string                 `json:"id"`
+			Type    string                 `json:"type"`
+			Repo    string                 `json:"repo"`
+			Payload map[string]interface{} `json:"payload"`
+		}
+		if json.Unmarshal([]byte(lines[i]), &evt) != nil {
+			continue
+		}
+		if evt.Type != "git.push" {
+			continue
+		}
+		if evt.Repo != repoName+".git" && evt.Repo != repoName {
+			continue
+		}
+		if payload, ok := evt.Payload["changes"].(map[string]interface{}); ok {
+			for _, change := range payload {
+				if changeMap, ok := change.(map[string]interface{}); ok {
+					newHash, _ := changeMap["new"].(string)
+					if strings.HasPrefix(newHash, commitHash) || strings.HasPrefix(commitHash, newHash) {
+						return evt.ID
+					}
+				}
+			}
+		}
+	}
+	return ""
 }
