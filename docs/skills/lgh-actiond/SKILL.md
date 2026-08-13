@@ -1,8 +1,6 @@
 ---
 name: lgh-actiond
-description: >
-  Working with LGH (LocalGitHub) + ActionD + ActionD-Web — Joe's local Git hosting and CI/CD stack.
-  Architecture, MCP tools, REST API, plugin system, development workflow, known pitfalls.
+description: 本地 Git 托管 (LGH) + 本地 CI/CD 引擎 (ActionD) + Web 控制台的全栈参考文档。覆盖架构、事件流、CLI 命令、MCP 工具清单、REST API、插件系统、构建安装与已知踩坑。当用户工作在 /Users/fenge1222/neil/LocalGitHub/ 下，或提到 lgh / actiond / 本地 CI / 本地 Git 托管 / lgh up / CI 流水线 / CI 插件 / dev_cycle_run / actiond_status 等任意一个时使用。即使用户没有明确说 "lgh"，只要涉及这套本地 CI/CD 工具链的调试、使用或开发都应触发本 skill。
 trigger:
   - User asks about LGH, ActionD, lgh CLI, local CI/CD, local Git hosting
   - User wants to push code with `lgh up` and see CI results

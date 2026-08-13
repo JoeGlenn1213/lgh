@@ -9,6 +9,7 @@
 # Targets:
 #   - ~/.hermes/skills/devops/<name>/
 #   - ~/.codex/skills/<name>/
+#   - ~/.claude/skills/<name>/
 #
 # If a target is a symlink (preferred), it's skipped — the canonical source
 # is already directly accessible. The script only copies when the target is
@@ -25,6 +26,7 @@ SKILLS_DIR="$SCRIPT_DIR"
 TARGETS=(
   "hermes|$HOME/.hermes/skills/devops"
   "codex|$HOME/.codex/skills"
+  "claude|$HOME/.claude/skills"
 )
 
 sync_skill() {
