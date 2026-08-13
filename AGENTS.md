@@ -60,6 +60,7 @@ This repository is the LGH codebase for Town 2.0.
   - `pkg/skill` 公共 Skill SDK、`pkg/ui` 终端 UI
 - **运行时前置（重要）**：
   - LGH 用 `os.Executable()` 解析自身路径——**改代码后须把新二进制覆盖到实际运行路径（如 `cp dist/lgh bin/lgh` 或安装位置），否则跑的是旧二进制**。
+  - **macOS 坑（实测）**：`cp` 原地覆盖一个已签名/运行中的二进制后，内核缓存的旧签名失效，下次执行会被 **SIGKILL（exit 137）**。覆盖后必须 `codesign -f -s - <二进制>` 重签；若目标在 `/usr/local/bin`（root 目录、无 sudo 换不了 inode）且重签报 internal error，改放 `~/.local/bin/` 等用户目录新 inode 即可。当前守护进程经 launchd（`com.localgithub.lgh`）跑 `~/.local/bin/lgh`。
   - `lgh serve -d` 须先启动，`git push` 到 `http://127.0.0.1:9418/...` 才会通。
   - 与 ActionD 联动依赖兄弟目录 `../ActionD/` 存在且其守护进程在跑。
 - **当前版本**：`cmd/lgh/main.go` 的 `Version`（Makefile 从此读取，单一事实源）。
