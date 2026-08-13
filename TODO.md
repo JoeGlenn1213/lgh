@@ -1,5 +1,10 @@
 # LGH TODO & Future Improvements
 
+> ⚠️ **本文件停留在 v1.0.x 规划期，已陈旧**。当前版本以 `cmd/lgh/main.go` 的
+> `Version` 为准（Makefile 亦从此读取，单一事实源）；近期的实际演进记录见
+> `CHANGELOG_LOCAL.md` 与 `docs/LGH_EVOLUTION_NOTES.md`。下述条目仅作历史参考，
+> 完成状态未必准确。
+
 This file tracks planned improvements and feature requests.
 
 ## 🔴 P0 - Critical (Before 1.1)

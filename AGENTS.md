@@ -12,9 +12,12 @@ This repository is the LGH codebase for Town 2.0.
 
 ## First Read
 
-- [`/Users/fenge1222/joe/town-v2/README.md`](/Users/fenge1222/joe/town-v2/README.md)
-- [`/Users/fenge1222/joe/town-v2/docs/townV2-rfc-0001.md`](/Users/fenge1222/joe/town-v2/docs/townV2-rfc-0001.md)
-- [`/Users/fenge1222/joe/town-v2/docs/townV2-rfc-0002-multi-window-governance.md`](/Users/fenge1222/joe/town-v2/docs/townV2-rfc-0002-multi-window-governance.md)
+> Town 2.0 外部文档，默认位于 `~/joe/town-v2`（相对本文件即 `../../../joe/town-v2`）。
+> 路径随机器布局调整；找不到时跳过即可，不影响本仓开发。
+
+- [`../../../joe/town-v2/README.md`](../../../joe/town-v2/README.md)
+- [`../../../joe/town-v2/docs/townV2-rfc-0001.md`](../../../joe/town-v2/docs/townV2-rfc-0001.md)
+- [`../../../joe/town-v2/docs/townV2-rfc-0002-multi-window-governance.md`](../../../joe/town-v2/docs/townV2-rfc-0002-multi-window-governance.md)
 
 ## Default Shared Scope
 
