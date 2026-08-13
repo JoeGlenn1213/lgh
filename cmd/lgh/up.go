@@ -320,7 +320,12 @@ func waitAndShowCIResults(cwd string) {
 
 	// Find event_id from LGH event log
 	repoName := filepath.Base(cwd)
-	eventID := findEventIDFromLog(commitHash, repoName)
+	eventID, eventIDErr := findEventIDFromLog(commitHash, repoName)
+	if eventIDErr != nil {
+		// Non-fatal: skip CI wait, but make it visible.
+		ui.Warning(fmt.Sprintf("findEventIDFromLog: %v — skipping CI wait", eventIDErr))
+		return
+	}
 	if eventID == "" {
 		return // Can't find event, skip
 	}
@@ -411,16 +416,48 @@ func waitAndShowCIResults(cwd string) {
 	}
 }
 
-// findEventIDFromLog reads the LGH event JSONL log to find the event_id for a commit+repo
-func findEventIDFromLog(commitHash, repoName string) string {
+// lghEventRecord is the canonical shape of a single line in events.jsonl.
+// All JSON field access must go through parseEventRecord — this is the single
+// point of format-coupling. If the schema changes, only this struct needs updating.
+type lghEventRecord struct {
+	ID      string                 `json:"id"`
+	Type    string                 `json:"type"`
+	Repo    string                 `json:"repo"`
+	Payload map[string]interface{} `json:"payload"`
+}
+
+// parseEventRecord parses one line from events.jsonl into an lghEventRecord.
+// Returns an error if the line is not valid JSON or is missing required fields,
+// so callers can distinguish "bad format" from "not the record we want".
+func parseEventRecord(line string) (lghEventRecord, error) {
+	var evt lghEventRecord
+	if err := json.Unmarshal([]byte(line), &evt); err != nil {
+		return lghEventRecord{}, fmt.Errorf("events.jsonl parse error: %w", err)
+	}
+	if evt.ID == "" || evt.Type == "" {
+		return lghEventRecord{}, fmt.Errorf("events.jsonl record missing required fields id/type (got: %q)", line)
+	}
+	return evt, nil
+}
+
+// findEventIDFromLog reads the LGH event JSONL log to find the event_id for a
+// commit+repo. Returns (id, nil) on match, ("", nil) when no matching record is
+// found (normal case: ActionD not running, push not yet logged), and
+// ("", err) when the log exists but contains unreadable/malformed lines that
+// prevent a reliable search — callers should log the error and degrade gracefully.
+func findEventIDFromLog(commitHash, repoName string) (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return ""
+		return "", fmt.Errorf("could not determine home dir: %w", err)
 	}
 	eventLogPath := filepath.Join(home, ".localgithub", "events", "events.jsonl")
 	f, err := os.Open(eventLogPath)
 	if err != nil {
-		return ""
+		// File not existing is normal when LGH hasn't emitted any events yet.
+		if os.IsNotExist(err) {
+			return "", nil
+		}
+		return "", fmt.Errorf("open events.jsonl: %w", err)
 	}
 	defer f.Close()
 
@@ -438,19 +475,16 @@ func findEventIDFromLog(commitHash, repoName string) string {
 		}
 	}
 
-	// Search from end (most recent first)
+	// Search from end (most recent first), cap at last 50 lines.
 	start := len(lines) - 50
 	if start < 0 {
 		start = 0
 	}
+	var parseErrors []string
 	for i := len(lines) - 1; i >= start; i-- {
-		var evt struct {
-			ID      string                 `json:"id"`
-			Type    string                 `json:"type"`
-			Repo    string                 `json:"repo"`
-			Payload map[string]interface{} `json:"payload"`
-		}
-		if json.Unmarshal([]byte(lines[i]), &evt) != nil {
+		evt, err := parseEventRecord(lines[i])
+		if err != nil {
+			parseErrors = append(parseErrors, err.Error())
 			continue
 		}
 		if evt.Type != "git.push" {
@@ -464,11 +498,16 @@ func findEventIDFromLog(commitHash, repoName string) string {
 				if changeMap, ok := change.(map[string]interface{}); ok {
 					newHash, _ := changeMap["new"].(string)
 					if strings.HasPrefix(newHash, commitHash) || strings.HasPrefix(commitHash, newHash) {
-						return evt.ID
+						return evt.ID, nil
 					}
 				}
 			}
 		}
 	}
-	return ""
+	if len(parseErrors) > 0 {
+		// Return an error so callers know the search was degraded, not just empty.
+		return "", fmt.Errorf("%d line(s) in events.jsonl could not be parsed: %s",
+			len(parseErrors), strings.Join(parseErrors, "; "))
+	}
+	return "", nil
 }
