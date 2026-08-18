@@ -175,3 +175,23 @@ func Reset() {
 	once = sync.Once{}
 	instance = nil
 }
+
+// NewForTest creates an isolated Config instance for a specific data directory.
+// This allows tests to run without affecting or reading the real user config.
+// Call config.Reset() after the test to restore normal singleton behavior.
+func NewForTest(dataDir string) *Config {
+	cfg := &Config{
+		Port:        DefaultPort,
+		BindAddress: DefaultBindAddress,
+		ReposDir:    filepath.Join(dataDir, "repos"),
+		ReadOnly:    false,
+		MDNSEnabled: false,
+		DataDir:     dataDir,
+	}
+	// Override the singleton so code that calls config.Get() also uses this config
+	instance = cfg
+	once = sync.Once{}
+	once.Do(func() {}) // Mark as done so Load() won't overwrite it
+	instance = cfg    // Set again after once.Do
+	return cfg
+}

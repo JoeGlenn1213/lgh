@@ -44,6 +44,31 @@ func init() {
 	lghBinary = filepath.Join(filepath.Dir(wd), binaryName)
 }
 
+// gitEnv returns environment variables for git subprocesses that prevent
+// access to the real user's ~/.gitconfig (required for sandbox/CI isolation).
+func gitEnv(tmpHome string) []string {
+	base := os.Environ()
+	isolated := make([]string, 0, len(base)+4)
+	for _, e := range base {
+		// Strip existing HOME/USERPROFILE so our override wins
+		if strings.HasPrefix(e, "HOME=") || strings.HasPrefix(e, "USERPROFILE=") {
+			continue
+		}
+		isolated = append(isolated, e)
+	}
+	isolated = append(isolated,
+		"HOME="+tmpHome,
+		"USERPROFILE="+tmpHome,
+		"GIT_CONFIG_NOSYSTEM=1",           // skip /etc/gitconfig
+		"GIT_CONFIG_GLOBAL=/dev/null",     // skip ~/.gitconfig
+		"GIT_AUTHOR_NAME=Test",
+		"GIT_AUTHOR_EMAIL=test@example.com",
+		"GIT_COMMITTER_NAME=Test",
+		"GIT_COMMITTER_EMAIL=test@example.com",
+	)
+	return isolated
+}
+
 func TestLGHInit(t *testing.T) {
 	// Create a temporary home directory
 	tmpHome, err := os.MkdirTemp("", "lgh-test-home-*")
@@ -167,9 +192,10 @@ func TestLGHAddAndList(t *testing.T) {
 	}
 	defer os.RemoveAll(testRepo)
 
-	// Initialize git repo
+	// Initialize git repo (injecting isolated env to avoid ~/.gitconfig access in sandbox)
 	gitInit := exec.Command("git", "init")
 	gitInit.Dir = testRepo
+	gitInit.Env = gitEnv(tmpHome)
 	if gInitOut, gInitErr := gitInit.CombinedOutput(); gInitErr != nil {
 		t.Fatalf("git init failed: %v\nOutput: %s", gInitErr, gInitOut)
 	}
@@ -182,10 +208,12 @@ func TestLGHAddAndList(t *testing.T) {
 
 	gitAdd := exec.Command("git", "add", ".")
 	gitAdd.Dir = testRepo
+	gitAdd.Env = gitEnv(tmpHome)
 	_ = gitAdd.Run()
 
-	gitCommit := exec.Command("git", "-c", "user.email=test@test.com", "-c", "user.name=Test", "commit", "-m", "Initial commit")
+	gitCommit := exec.Command("git", "commit", "-m", "Initial commit")
 	gitCommit.Dir = testRepo
+	gitCommit.Env = gitEnv(tmpHome)
 	_ = gitCommit.Run()
 
 	// First init LGH
@@ -242,9 +270,10 @@ func TestLGHRemove(t *testing.T) {
 	}
 	defer os.RemoveAll(testRepo)
 
-	// Initialize git repo
+	// Initialize git repo (injecting isolated env)
 	gitInit := exec.Command("git", "init")
 	gitInit.Dir = testRepo
+	gitInit.Env = gitEnv(tmpHome)
 	_ = gitInit.Run()
 
 	// First init LGH
@@ -306,9 +335,10 @@ func TestLGHServeAndClone(t *testing.T) {
 	}
 	defer os.RemoveAll(testRepo)
 
-	// Initialize git repo with content
+	// Initialize git repo with content (injecting isolated env to avoid ~/.gitconfig access in sandbox)
 	gitInit := exec.Command("git", "init")
 	gitInit.Dir = testRepo
+	gitInit.Env = gitEnv(tmpHome)
 	if gInitOut, gInitErr := gitInit.CombinedOutput(); gInitErr != nil {
 		t.Fatalf("git init failed: %v\nOutput: %s", gInitErr, gInitOut)
 	}
@@ -319,9 +349,11 @@ func TestLGHServeAndClone(t *testing.T) {
 
 	gitAdd := exec.Command("git", "add", ".")
 	gitAdd.Dir = testRepo
+	gitAdd.Env = gitEnv(tmpHome)
 	_ = gitAdd.Run()
-	gitCommit := exec.Command("git", "-c", "user.email=test@test.com", "-c", "user.name=Test", "commit", "-m", "Initial commit")
+	gitCommit := exec.Command("git", "commit", "-m", "Initial commit")
 	gitCommit.Dir = testRepo
+	gitCommit.Env = gitEnv(tmpHome)
 	_ = gitCommit.Run()
 
 	// Init LGH

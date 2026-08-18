@@ -58,6 +58,18 @@ test-short:
 	@echo "Running short tests..."
 	go test ./... -v -short
 
+# Run full CI gate (vet + short tests + lint)
+ci: test-short
+	@echo "Running go vet..."
+	@go vet ./...
+	@echo "Running lint..."
+	@if command -v golangci-lint >/dev/null 2>&1; then \
+		golangci-lint run ./...; \
+	else \
+		echo "golangci-lint not installed, skipping (install with: brew install golangci-lint)"; \
+	fi
+	@echo "✓ CI gate passed"
+
 # Install to /usr/local/bin
 install: build
 	@echo "Installing LGH to /usr/local/bin..."
@@ -104,6 +116,7 @@ help:
 	@echo "  make checksums   Generate SHA256 checksums"
 	@echo "  make test        Run all tests"
 	@echo "  make test-short  Run short tests (skip integration)"
+	@echo "  make ci          Run CI gate: vet + short tests + lint"
 	@echo "  make install     Install to /usr/local/bin"
 	@echo "  make uninstall   Remove from /usr/local/bin"
 	@echo "  make clean       Clean build artifacts"

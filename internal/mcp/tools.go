@@ -30,12 +30,14 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
 
 	"github.com/JoeGlenn1213/lgh/internal/config"
 	"github.com/JoeGlenn1213/lgh/internal/event"
+	"github.com/JoeGlenn1213/lgh/internal/git"
 	"github.com/JoeGlenn1213/lgh/internal/ignore"
 	"github.com/JoeGlenn1213/lgh/internal/registry"
 	"github.com/JoeGlenn1213/lgh/internal/server"
@@ -74,6 +76,14 @@ func getFloat(args map[string]interface{}, key string) float64 {
 	return 0
 }
 
+// getInt gets an int argument
+func getInt(args map[string]interface{}, key string, defaultVal int) int {
+	if v, ok := args[key].(float64); ok {
+		return int(v)
+	}
+	return defaultVal
+}
+
 // Tool Handlers
 
 func handleStatus(_ context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -82,20 +92,49 @@ func handleStatus(_ context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult
 	reg := registry.New()
 	repos, _ := reg.List()
 
+	// Check ActionD status via its PID file
+	actiondRunning := false
+	actiondPID := 0
+	home, homeErr := os.UserHomeDir()
+	if homeErr == nil {
+		pidFile := filepath.Join(home, ".localgithub", "actions", "actiond.pid")
+		if data, err := os.ReadFile(pidFile); err == nil {
+			var apid int
+			if _, parseErr := fmt.Sscanf(string(data), "%d", &apid); parseErr == nil && apid > 0 {
+				// Use os.FindProcess + Signal(0) — pure Go, no shell-out
+				if p, pErr := os.FindProcess(apid); pErr == nil {
+					if p.Signal(syscall.Signal(0)) == nil {
+						actiondRunning = true
+						actiondPID = apid
+					}
+				}
+			}
+		}
+	}
+
 	result := map[string]interface{}{
-		"server_running": running,
-		"pid":            pid,
-		"address":        fmt.Sprintf("%s:%d", cfg.BindAddress, cfg.Port),
-		"repos_count":    len(repos),
-		"repos_dir":      cfg.ReposDir,
-		"read_only":      cfg.ReadOnly,
+		"lgh": map[string]interface{}{
+			"running":     running,
+			"pid":         pid,
+			"address":     fmt.Sprintf("%s:%d", cfg.BindAddress, cfg.Port),
+			"repos_count": len(repos),
+			"repos_dir":   cfg.ReposDir,
+			"read_only":   cfg.ReadOnly,
+		},
+		"actiond": map[string]interface{}{
+			"running": actiondRunning,
+			"pid":     actiondPID,
+		},
 	}
 
 	data, _ := json.MarshalIndent(result, "", "  ")
 	return mcp.NewToolResultText(string(data)), nil
 }
 
-func handleList(_ context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func handleList(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	params := getArgsMap(request)
+	filter := strings.ToLower(getString(params, "filter"))
+
 	reg := registry.New()
 	repos, err := reg.List()
 	if err != nil {
@@ -105,6 +144,14 @@ func handleList(_ context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, 
 	cfg := config.Get()
 	var repoList []map[string]interface{}
 	for _, repo := range repos {
+		// Apply optional filter (matches against name or source_path)
+		if filter != "" {
+			nameMatch := strings.Contains(strings.ToLower(repo.Name), filter)
+			pathMatch := strings.Contains(strings.ToLower(repo.SourcePath), filter)
+			if !nameMatch && !pathMatch {
+				continue
+			}
+		}
 		repoList = append(repoList, map[string]interface{}{
 			"name":        repo.Name,
 			"source_path": repo.SourcePath,
@@ -112,6 +159,10 @@ func handleList(_ context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, 
 			"clone_url":   fmt.Sprintf("http://%s:%d/lgh/%s.git", cfg.BindAddress, cfg.Port, repo.Name),
 			"created_at":  repo.CreatedAt.Format("2006-01-02 15:04:05"),
 		})
+	}
+
+	if repoList == nil {
+		repoList = []map[string]interface{}{}
 	}
 
 	data, _ := json.MarshalIndent(repoList, "", "  ")
@@ -138,22 +189,52 @@ func handleAdd(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolR
 		return mcp.NewToolResultError(fmt.Sprintf("Path does not exist: %s", absPath)), nil
 	}
 
-	// Use lgh add command
-	cmdArgs := []string{"add", absPath}
-	if name != "" {
-		cmdArgs = append(cmdArgs, "--name", name)
+	if name == "" {
+		name = filepath.Base(absPath)
 	}
 
-	cmd, err := getLGHCmd(ctx, cmdArgs...)
-	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("Failed to resolve lgh binary: %v", err)), nil
-	}
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("Failed to add repository: %s", string(output))), nil
+	bareRepoName := name
+	if filepath.Ext(bareRepoName) != ".git" {
+		bareRepoName = name + ".git"
 	}
 
-	return mcp.NewToolResultText(string(output)), nil
+	reg := registry.New()
+	if reg.Exists(name) {
+		return mcp.NewToolResultError(fmt.Sprintf("repository '%s' is already registered", name)), nil
+	}
+
+	if !git.IsGitRepo(absPath) {
+		if err := git.InitRepo(absPath); err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("failed to initialize git repository: %v", err)), nil
+		}
+	}
+
+	cfg := config.Get()
+	barePath := filepath.Join(cfg.ReposDir, bareRepoName)
+
+	if _, err := os.Stat(barePath); err == nil {
+		return mcp.NewToolResultError(fmt.Sprintf("bare repository already exists at %s", barePath)), nil
+	}
+
+	if err := git.InitBareRepo(barePath); err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("failed to create bare repository: %v", err)), nil
+	}
+
+	remoteURL := fmt.Sprintf("http://%s:%d/lgh/%s", cfg.BindAddress, cfg.Port, bareRepoName)
+	_ = git.AddRemote(absPath, "lgh", remoteURL)
+
+	if err := reg.Add(name, absPath, barePath); err != nil {
+		_ = os.RemoveAll(barePath)
+		return mcp.NewToolResultError(fmt.Sprintf("failed to register repository: %v", err)), nil
+	}
+
+	event.Publish(event.RepoAdded, name, map[string]interface{}{
+		"source": absPath,
+		"bare":   barePath,
+		"url":    remoteURL,
+	})
+
+	return mcp.NewToolResultText(fmt.Sprintf("Repository '%s' added successfully. Clone URL: %s", name, remoteURL)), nil
 }
 
 func handleRemove(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -164,17 +245,30 @@ func handleRemove(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallTo
 		return mcp.NewToolResultError("name is required"), nil
 	}
 
-	// Use lgh remove command with -y flag
-	cmd, err := getLGHCmd(ctx, "remove", name, "-y")
+	reg := registry.New()
+	repo, err := reg.Find(name)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("Failed to resolve lgh binary: %v", err)), nil
-	}
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("Failed to remove repository: %s", string(output))), nil
+		return mcp.NewToolResultError(fmt.Sprintf("repository '%s' not found", name)), nil
 	}
 
-	return mcp.NewToolResultText(string(output)), nil
+	if _, err := os.Stat(repo.SourcePath); err == nil {
+		_ = git.RemoveRemote(repo.SourcePath, "lgh")
+	}
+
+	if git.IsBareRepo(repo.BarePath) {
+		_ = os.RemoveAll(repo.BarePath)
+	}
+
+	if err := reg.Remove(name); err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("failed to remove from registry: %v", err)), nil
+	}
+
+	event.Publish(event.RepoRemoved, name, map[string]interface{}{
+		"source": repo.SourcePath,
+		"bare":   repo.BarePath,
+	})
+
+	return mcp.NewToolResultText(fmt.Sprintf("Repository '%s' removed successfully", name)), nil
 }
 
 func handleUp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -200,22 +294,59 @@ func handleUp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolRe
 	// Ensure .gitignore exists
 	projectType, _ := ignore.EnsureGitignore(workDir)
 
-	// Build and run the command
-	cmdArgs := []string{"up", message}
-	if force {
-		cmdArgs = append(cmdArgs, "--force")
+	if !git.IsGitRepo(workDir) {
+		if err := git.InitRepo(workDir); err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("failed to initialize git repository: %v", err)), nil
+		}
 	}
 
-	cmd, err := getLGHCmd(ctx, cmdArgs...)
-	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("Failed to resolve lgh binary: %v", err)), nil
+	reg := registry.New()
+	if _, err := reg.FindBySourcePath(workDir); err != nil {
+		name := filepath.Base(workDir)
+		bareRepoName := name + ".git"
+		cfg := config.Get()
+		barePath := filepath.Join(cfg.ReposDir, bareRepoName)
+		_ = git.InitBareRepo(barePath)
+		remoteURL := fmt.Sprintf("http://%s:%d/lgh/%s", cfg.BindAddress, cfg.Port, bareRepoName)
+		_ = git.AddRemote(workDir, "lgh", remoteURL)
+		_ = reg.Add(name, workDir, barePath)
+		event.Publish(event.RepoAdded, name, map[string]interface{}{
+			"source": workDir,
+			"bare":   barePath,
+			"url":    remoteURL,
+		})
 	}
-	cmd.Dir = workDir
-	output, err := cmd.CombinedOutput()
+
+	if !force {
+		report, err := ignore.DetectTrash(workDir)
+		if err == nil && report != nil && report.HasBlocking {
+			return mcp.NewToolResultError("blocking issues found by trash detection. Use force: true to override."), nil
+		}
+	}
+
+	output := ""
+	err := git.CommitChanges(workDir, message)
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
+			output += "Nothing to commit. "
+			err = nil
+		}
+	} else {
+		output += "Committed. "
+	}
+
+	if err == nil {
+		if pushErr := git.PushToRemoteUpstream(workDir, "lgh", "HEAD"); pushErr != nil {
+			err = pushErr
+			output += "Push failed: " + pushErr.Error()
+		} else {
+			output += "Pushed to LGH."
+		}
+	}
 
 	result := map[string]interface{}{
 		"success":      err == nil,
-		"output":       string(output),
+		"output":       output,
 		"project_type": string(projectType),
 	}
 
@@ -256,7 +387,89 @@ func handleUp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolRe
 	return mcp.NewToolResultText(string(data)), nil
 }
 
+// handleUpDryRun previews what lgh_up would do without actually committing or pushing.
+// It shows: pending changed files, trash detection results, and registration status.
+func handleUpDryRun(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	params := getArgsMap(request)
+	path := getString(params, "path")
+
+	workDir := path
+	if workDir == "" {
+		var err error
+		workDir, err = os.Getwd()
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Failed to get current directory: %v", err)), nil
+		}
+	}
+
+	result := map[string]interface{}{
+		"path":     workDir,
+		"dry_run":  true,
+	}
+
+	// Check git repo state
+	isGit := git.IsGitRepo(workDir)
+	result["is_git_repo"] = isGit
+
+	// Check registry
+	reg := registry.New()
+	repoMapping, regErr := reg.FindBySourcePath(workDir)
+	result["is_registered"] = regErr == nil
+	if regErr == nil {
+		result["registered_name"] = repoMapping.Name
+		result["clone_url"] = fmt.Sprintf("http://%s:%d/lgh/%s.git",
+			config.Get().BindAddress, config.Get().Port, repoMapping.Name)
+	} else {
+		result["would_auto_register"] = true
+		result["would_register_as"] = filepath.Base(workDir)
+	}
+
+	// Collect staged/unstaged changes via git status --short
+	if isGit {
+		cmd := exec.Command("git", "-C", workDir, "status", "--short")
+		statusOut, err := cmd.Output()
+		if err == nil {
+			lines := strings.Split(strings.TrimSpace(string(statusOut)), "\n")
+			var changedFiles []string
+			for _, l := range lines {
+				if l != "" {
+					changedFiles = append(changedFiles, l)
+				}
+			}
+			result["pending_changes"] = changedFiles
+			result["pending_count"] = len(changedFiles)
+		}
+	}
+
+	// Trash detection
+	trashReport, trashErr := ignore.DetectTrash(workDir)
+	if trashErr == nil && trashReport != nil {
+		trashItems := []map[string]interface{}{}
+		for _, item := range trashReport.Items {
+			trashItems = append(trashItems, map[string]interface{}{
+				"path":     item.Path,
+				"size":     item.Size,
+				"blocking": item.Blocking,
+				"message":  item.Message,
+			})
+		}
+		result["trash"] = map[string]interface{}{
+			"has_blocking": trashReport.HasBlocking,
+			"total_size":   trashReport.TotalSize,
+			"items":        trashItems,
+		}
+		if trashReport.HasBlocking {
+			result["would_fail"] = true
+			result["fail_reason"] = "blocking trash detected; use force:true to override"
+		}
+	}
+
+	data, _ := json.MarshalIndent(result, "", "  ")
+	return mcp.NewToolResultText(string(data)), nil
+}
+
 func handleSave(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+
 	params := getArgsMap(request)
 	message := getString(params, "message")
 	path := getString(params, "path")
@@ -274,16 +487,32 @@ func handleSave(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallTool
 		}
 	}
 
-	cmd, err := getLGHCmd(ctx, "save", message)
-	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("Failed to resolve lgh binary: %v", err)), nil
+	ignore.EnsureGitignore(workDir)
+	if !git.IsGitRepo(workDir) {
+		if err := git.InitRepo(workDir); err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("failed to initialize git repository: %v", err)), nil
+		}
 	}
-	cmd.Dir = workDir
-	output, err := cmd.CombinedOutput()
+
+	report, err := ignore.DetectTrash(workDir)
+	if err == nil && report != nil && report.HasBlocking {
+		return mcp.NewToolResultError("blocking issues found by trash detection"), nil
+	}
+
+	output := ""
+	err = git.CommitChanges(workDir, message)
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
+			output = "Nothing to commit, working tree clean"
+			err = nil
+		}
+	} else {
+		output = "Saved locally"
+	}
 
 	result := map[string]interface{}{
 		"success": err == nil,
-		"output":  string(output),
+		"output":  output,
 	}
 	if err != nil {
 		result["error"] = err.Error()
@@ -295,11 +524,11 @@ func handleSave(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallTool
 
 func handleServeStart(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	params := getArgsMap(request)
-	port := getFloat(params, "port")
+	port := getInt(params, "port", 0)
 
 	args := []string{"serve", "--daemon"}
 	if port > 0 {
-		args = append(args, "--port", fmt.Sprintf("%d", int(port)))
+		args = append(args, "--port", fmt.Sprintf("%d", port))
 	}
 
 	cmd, err := getLGHCmd(ctx, args...)
@@ -315,22 +544,22 @@ func handleServeStart(ctx context.Context, request mcp.CallToolRequest) (*mcp.Ca
 }
 
 func handleServeStop(ctx context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	cmd, err := getLGHCmd(ctx, "stop")
-	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("Failed to resolve lgh binary: %v", err)), nil
-	}
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("Failed to stop server: %s", string(output))), nil
+	running, pid := server.IsRunning()
+	if !running {
+		return mcp.NewToolResultText("LGH server is not running"), nil
 	}
 
-	return mcp.NewToolResultText(string(output)), nil
+	if err := server.StopServer(pid); err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to stop server: %v", err)), nil
+	}
+
+	return mcp.NewToolResultText("LGH server stopped successfully"), nil
 }
 
 func handleRollback(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	params := getArgsMap(request)
 	path := getString(params, "path")
-	steps := getFloat(params, "steps")
+	steps := getInt(params, "steps", 1)
 	push := getBool(params, "push")
 
 	if steps <= 0 {
@@ -356,10 +585,10 @@ func handleRollback(ctx context.Context, request mcp.CallToolRequest) (*mcp.Call
 	beforeCommit := strings.TrimSpace(string(output))
 
 	// Get target commit (N steps back)
-	cmd = exec.CommandContext(ctx, "git", "-C", workDir, "rev-parse", fmt.Sprintf("HEAD~%d", int(steps)))
+	cmd = exec.CommandContext(ctx, "git", "-C", workDir, "rev-parse", fmt.Sprintf("HEAD~%d", steps))
 	output, err = cmd.Output()
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("Failed to find commit %d steps back: %v", int(steps), err)), nil
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to find commit %d steps back: %v", steps, err)), nil
 	}
 	targetCommit := strings.TrimSpace(string(output))
 
@@ -379,7 +608,7 @@ func handleRollback(ctx context.Context, request mcp.CallToolRequest) (*mcp.Call
 		"success":       true,
 		"from_commit":   beforeCommit,
 		"to_commit":     targetCommit,
-		"steps":         int(steps),
+		"steps":         steps,
 		"rolled_back":   rollbackMsg,
 		"local_changed": true,
 	}
@@ -403,7 +632,7 @@ func handleRollback(ctx context.Context, request mcp.CallToolRequest) (*mcp.Call
 
 func handleLog(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	params := getArgsMap(request)
-	limit := getFloat(params, "limit")
+	limit := getInt(params, "limit", 20)
 	level := getString(params, "level")
 
 	if limit <= 0 {
@@ -417,7 +646,7 @@ func handleLog(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolRes
 		return mcp.NewToolResultText("[]"), nil
 	}
 
-	lines, err := slog.ReadLastLines(logPath, int(limit), level)
+	lines, err := slog.ReadLastLines(logPath, limit, level)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("Failed to read logs: %v", err)), nil
 	}
@@ -425,6 +654,64 @@ func handleLog(_ context.Context, request mcp.CallToolRequest) (*mcp.CallToolRes
 	// Format as JSON array
 	output := "[" + strings.Join(lines, ",") + "]"
 	return mcp.NewToolResultText(output), nil
+}
+
+func handleDiff(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	params := getArgsMap(request)
+	path := getString(params, "path")
+	staged := getBool(params, "staged")
+
+	workDir := path
+	if workDir == "" {
+		var err error
+		workDir, err = os.Getwd()
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Failed to get current directory: %v", err)), nil
+		}
+	}
+
+	// Check if it's a git repo
+	cmd := exec.CommandContext(ctx, "git", "-C", workDir, "rev-parse", "--is-inside-work-tree")
+	if err := cmd.Run(); err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Not a git repository: %s", workDir)), nil
+	}
+
+	// Build diff command
+	args := []string{"-C", workDir, "diff"}
+	if staged {
+		args = append(args, "--cached")
+	}
+	args = append(args, "--stat") // Summary first
+
+	cmd = exec.CommandContext(ctx, "git", args...)
+	statOutput, _ := cmd.Output()
+
+	// Also get the full diff (truncated for large diffs)
+	fullArgs := []string{"-C", workDir, "diff"}
+	if staged {
+		fullArgs = append(fullArgs, "--cached")
+	}
+	cmd = exec.CommandContext(ctx, "git", fullArgs...)
+	fullOutput, _ := cmd.Output()
+
+	// Truncate if too large (>32KB) to avoid flooding AI context
+	diff := string(fullOutput)
+	truncated := false
+	if len(diff) > 32*1024 {
+		diff = diff[:32*1024]
+		truncated = true
+	}
+
+	result := map[string]interface{}{
+		"has_changes": len(statOutput) > 0,
+		"stat":        string(statOutput),
+		"diff":        diff,
+		"truncated":   truncated,
+		"staged":      staged,
+	}
+
+	data, _ := json.MarshalIndent(result, "", "  ")
+	return mcp.NewToolResultText(string(data)), nil
 }
 
 // getLGHCmd returns an exec.Cmd for the current LGH binary

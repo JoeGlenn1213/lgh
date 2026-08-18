@@ -52,7 +52,7 @@ func registerTools(s *server.MCPServer) {
 	// lgh_status - Get server status
 	s.AddTool(
 		mcp.NewTool("lgh_status",
-			mcp.WithDescription("Get LGH server status including running state and repository list"),
+			mcp.WithDescription("Get unified health status for LGH and ActionD. Returns running state, PID, address, repo count, and ActionD daemon status."),
 		),
 		handleStatus,
 	)
@@ -61,6 +61,9 @@ func registerTools(s *server.MCPServer) {
 	s.AddTool(
 		mcp.NewTool("lgh_list",
 			mcp.WithDescription("List all repositories registered with LGH local server. Returns source_path (local working dir) and clone_url (LGH server URL)."),
+			mcp.WithString("filter",
+				mcp.Description("Optional substring filter applied to repository name or source path (case-insensitive)"),
+			),
 		),
 		handleList,
 	)
@@ -110,6 +113,17 @@ func registerTools(s *server.MCPServer) {
 		handleUp,
 	)
 
+	// lgh_up_dryrun - Preview what lgh_up would do without committing/pushing
+	s.AddTool(
+		mcp.NewTool("lgh_up_dryrun",
+			mcp.WithDescription("Dry-run preview of lgh_up: shows pending changed files, trash detection results, and whether the repo is registered with LGH. No files are committed or pushed."),
+			mcp.WithString("path",
+				mcp.Description("Absolute path to the LOCAL working directory (defaults to current directory)"),
+			),
+		),
+		handleUpDryRun,
+	)
+
 	// lgh_save - Local save
 	s.AddTool(
 		mcp.NewTool("lgh_save",
@@ -129,7 +143,7 @@ func registerTools(s *server.MCPServer) {
 	s.AddTool(
 		mcp.NewTool("lgh_serve_start",
 			mcp.WithDescription("Start the LGH HTTP server in background"),
-			mcp.WithNumber("port",
+			mcp.WithNumber("port", // TODO: change to WithInteger when supported by mcp-go
 				mcp.Description("Port to listen on (default: 9418)"),
 			),
 		),
@@ -148,7 +162,7 @@ func registerTools(s *server.MCPServer) {
 	s.AddTool(
 		mcp.NewTool("lgh_log",
 			mcp.WithDescription("View LGH server runtime logs (errors, warnings, info)"),
-			mcp.WithNumber("limit",
+			mcp.WithNumber("limit", // TODO: change to WithInteger when supported by mcp-go
 				mcp.Description("Number of log entries to return (default: 20)"),
 			),
 			mcp.WithString("level",
@@ -165,7 +179,7 @@ func registerTools(s *server.MCPServer) {
 			mcp.WithString("path",
 				mcp.Description("Absolute path to the LOCAL working directory (defaults to current directory)"),
 			),
-			mcp.WithNumber("steps",
+			mcp.WithNumber("steps", // TODO: change to WithInteger when supported by mcp-go
 				mcp.Description("Number of commits to roll back (default: 1)"),
 			),
 			mcp.WithBoolean("push",
@@ -173,6 +187,20 @@ func registerTools(s *server.MCPServer) {
 			),
 		),
 		handleRollback,
+	)
+
+	// lgh_diff - Show uncommitted changes
+	s.AddTool(
+		mcp.NewTool("lgh_diff",
+			mcp.WithDescription("Show uncommitted changes in a Git repository. Returns a diff summary and full diff content."),
+			mcp.WithString("path",
+				mcp.Description("Absolute path to the LOCAL working directory (defaults to current directory)"),
+			),
+			mcp.WithBoolean("staged",
+				mcp.Description("Show only staged (cached) changes (default: false)"),
+			),
+		),
+		handleDiff,
 	)
 }
 
