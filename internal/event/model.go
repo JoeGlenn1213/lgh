@@ -44,6 +44,7 @@ const (
 // Event represents a system event in LGH
 type Event struct {
 	ID        string                 `json:"id"`
+	Version   string                 `json:"version"` // Protocol version envelope (e.g. "1.0")
 	Type      Type                   `json:"type"`
 	RepoName  string                 `json:"repo"` // The name of the repository involved
 	Payload   map[string]interface{} `json:"payload,omitempty"`
@@ -54,6 +55,7 @@ type Event struct {
 func New(eventType Type, repoName string, payload map[string]interface{}) Event {
 	return Event{
 		ID:        uuid.New().String(),
+		Version:   "1.0",
 		Type:      eventType,
 		RepoName:  repoName,
 		Payload:   payload,
