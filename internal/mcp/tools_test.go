@@ -22,6 +22,8 @@ package mcp
 
 import (
 	"testing"
+
+	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // ---- getString ----
@@ -72,26 +74,28 @@ func TestGetBool(t *testing.T) {
 	}
 }
 
-// ---- getFloat ----
+// ---- withInteger ----
 
-func TestGetFloat(t *testing.T) {
-	args := map[string]interface{}{
-		"intVal":   float64(42),
-		"floatVal": float64(3.14),
-		"invalid":  "not float",
-		"missing":  nil,
+func TestWithInteger(t *testing.T) {
+	tool := mcp.NewTool("test_tool",
+		mcp.WithNumber("steps", mcp.Description("n")),
+		withInteger("steps"),
+		mcp.WithNumber("plain"),
+	)
+
+	steps, ok := tool.InputSchema.Properties["steps"].(map[string]any)
+	if !ok {
+		t.Fatalf("steps property missing or wrong type: %T", tool.InputSchema.Properties["steps"])
+	}
+	if steps["type"] != "integer" {
+		t.Errorf("steps type = %v, want integer", steps["type"])
 	}
 
-	if got := getFloat(args, "intVal"); got != 42 {
-		t.Errorf("getFloat(intVal) = %v, want 42", got)
+	plain, ok := tool.InputSchema.Properties["plain"].(map[string]any)
+	if !ok {
+		t.Fatalf("plain property missing: %T", tool.InputSchema.Properties["plain"])
 	}
-	if got := getFloat(args, "floatVal"); got != 3.14 {
-		t.Errorf("getFloat(floatVal) = %v, want 3.14", got)
-	}
-	if got := getFloat(args, "invalid"); got != 0 {
-		t.Errorf("getFloat(invalid) = %v, want 0", got)
-	}
-	if got := getFloat(args, "missing"); got != 0 {
-		t.Errorf("getFloat(missing) = %v, want 0", got)
+	if plain["type"] != "number" {
+		t.Errorf("plain type = %v, want number (untouched)", plain["type"])
 	}
 }

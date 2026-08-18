@@ -143,9 +143,10 @@ func registerTools(s *server.MCPServer) {
 	s.AddTool(
 		mcp.NewTool("lgh_serve_start",
 			mcp.WithDescription("Start the LGH HTTP server in background"),
-			mcp.WithNumber("port", // TODO: change to WithInteger when supported by mcp-go
+			mcp.WithNumber("port",
 				mcp.Description("Port to listen on (default: 9418)"),
 			),
+			withInteger("port"),
 		),
 		handleServeStart,
 	)
@@ -162,9 +163,10 @@ func registerTools(s *server.MCPServer) {
 	s.AddTool(
 		mcp.NewTool("lgh_log",
 			mcp.WithDescription("View LGH server runtime logs (errors, warnings, info)"),
-			mcp.WithNumber("limit", // TODO: change to WithInteger when supported by mcp-go
+			mcp.WithNumber("limit",
 				mcp.Description("Number of log entries to return (default: 20)"),
 			),
+			withInteger("limit"),
 			mcp.WithString("level",
 				mcp.Description("Filter by log level (DEBUG, INFO, WARN, ERROR)"),
 			),
@@ -179,9 +181,10 @@ func registerTools(s *server.MCPServer) {
 			mcp.WithString("path",
 				mcp.Description("Absolute path to the LOCAL working directory (defaults to current directory)"),
 			),
-			mcp.WithNumber("steps", // TODO: change to WithInteger when supported by mcp-go
+			mcp.WithNumber("steps",
 				mcp.Description("Number of commits to roll back (default: 1)"),
 			),
+			withInteger("steps"),
 			mcp.WithBoolean("push",
 				mcp.Description("Force push to LGH after rollback (default: false)"),
 			),

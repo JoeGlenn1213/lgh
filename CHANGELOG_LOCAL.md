@@ -1,5 +1,12 @@
 # LGH 本地开发日志
 
+## v1.3.1 (2026-08-18) - MCP Schema Integer Types
+
+### Improvements
+
+- **MCP 参数类型精确化**：`lgh_serve_start.port` / `lgh_log.limit` / `lgh_rollback.steps` 的 JSON Schema 从 `"number"` 收窄为 `"integer"`（新增 `withInteger` helper，规避 mcp-go v0.43.2 无 `WithInteger` 的库限制）
+- 移除死代码 `getFloat`（handler 侧实际全部使用 `getInt`）
+
 ## v1.3.0 (2026-04-08) - CI/CD Integration
 
 ### New Features

@@ -68,20 +68,23 @@ func getBool(args map[string]interface{}, key string) bool {
 	return false
 }
 
-// getFloat gets a float argument
-func getFloat(args map[string]interface{}, key string) float64 {
-	if v, ok := args[key].(float64); ok {
-		return v
-	}
-	return 0
-}
-
 // getInt gets an int argument
 func getInt(args map[string]interface{}, key string, defaultVal int) int {
 	if v, ok := args[key].(float64); ok {
 		return int(v)
 	}
 	return defaultVal
+}
+
+// withInteger narrows a WithNumber-declared property to JSON Schema
+// "integer" so models emit 3 instead of 3.0. mcp-go v0.43.2 has no
+// WithInteger; replace this helper when the library gains one.
+func withInteger(name string) mcp.ToolOption {
+	return func(t *mcp.Tool) {
+		if prop, ok := t.InputSchema.Properties[name].(map[string]any); ok {
+			prop["type"] = "integer"
+		}
+	}
 }
 
 // Tool Handlers

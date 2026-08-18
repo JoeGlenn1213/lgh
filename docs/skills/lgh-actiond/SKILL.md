@@ -80,18 +80,19 @@ actiond plugins       # 管理插件配置 (enable/disable/create)
 
 ### lgh_status
 ```
-描述：获取 LGH 服务器状态（运行中/已停止、PID、仓库数量）
+描述：LGH + ActionD 统一健康检查：运行状态、PID、地址、仓库数量、ActionD 守护状态
 参数：无
-返回：{server_running, pid, address, repos_count, repos_dir, read_only}
-用法：检查 LGH 是否在运行，启动前先调这个
+返回：运行状态 / PID / address / repos_count / ActionD daemon 状态
+用法：使用整套工具链前先调这个，一次确认两个服务都活着
 ```
 
 ### lgh_list
 ```
 描述：列出 LGH 上所有注册的仓库，返回本地路径和 clone URL
-参数：无
+参数：
+  filter (可选) — 对 name 或 source_path 做不区分大小写的子串过滤
 返回：[{name, source_path, bare_path, clone_url, created_at}]
-用法：查看有哪些仓库已注册
+用法：查看有哪些仓库已注册；仓多时用 filter 缩小返回省 token
 ```
 
 ### lgh_add
@@ -131,6 +132,15 @@ actiond plugins       # 管理插件配置 (enable/disable/create)
   triggered_job_ids 可用于 actiond_action_get 查看详情或 actiond_job_retry 重试。
 ```
 
+### lgh_up_dryrun
+```
+描述：lgh_up 的 dry-run 预览：显示待提交文件清单、trash 检测结果、
+     仓库是否已注册到 LGH。不执行任何 commit/push。
+参数：
+  path (可选) — 工作目录（默认当前目录）
+用法：push 前预检，避免大文件被拦截或误提交
+```
+
 ### lgh_save
 ```
 描述：仅本地保存：git add + git commit，不推送到 LGH
@@ -168,6 +178,15 @@ actiond plugins       # 管理插件配置 (enable/disable/create)
   steps (可选, 默认 1) — 回滚几个 commit
   push (可选) — 是否 force push 到 LGH
 用法：CI 失败需要回滚时使用
+```
+
+### lgh_diff
+```
+描述：查看仓库未提交的变更，返回 diff 摘要 + 完整 diff 内容
+参数：
+  path (可选) — 工作目录（默认当前目录）
+  staged (可选) — 只看已暂存 (staged) 变更（默认 false）
+用法：commit 前让 AI review 变更，替代手写 git diff
 ```
 
 ---
@@ -316,6 +335,7 @@ Profile 控制每次 push 跑多少插件：
 | `/api/actions/{id}/retry` | POST | 重试失败任务 |
 | `/api/actions/{id}/cancel` | POST | 取消运行中任务 |
 | `/api/actions/{id}/approve` | POST | 审批待批准任务 |
+| `/api/actions/{id}/diagnose` | GET | AI 失败诊断报告（category / root cause / fix steps） |
 | `/api/plugins` | GET | 列出插件 |
 | `/api/plugins/{name}/toggle` | POST | 启用/禁用插件 |
 | `/api/profile` | GET/POST | 获取/设置执行 profile |
