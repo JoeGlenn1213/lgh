@@ -741,8 +741,13 @@ func findEventIDForCommit(commitHash, workDir string) string {
 	}
 	defer f.Close()
 
-	// Get repo name from workDir
+	// Get repo name from workDir, preferring registered name if found
 	repoName := filepath.Base(workDir)
+	reg := registry.New()
+	if mapping, regErr := reg.FindBySourcePath(workDir); regErr == nil && mapping != nil && mapping.Name != "" {
+		repoName = mapping.Name
+	}
+	normRepo := normalizeRepoName(repoName)
 
 	// Read from the end (most recent events first) — scan last 50 lines
 	var lines []string
@@ -765,8 +770,10 @@ func findEventIDForCommit(commitHash, workDir string) string {
 		if evt.Type != event.GitPush {
 			continue
 		}
-		// Match by repo name
-		if evt.RepoName != repoName+".git" && evt.RepoName != repoName {
+		// Match by repo name (case-insensitive, with/without .git, and normalized)
+		cleanEvtRepo := strings.TrimSuffix(strings.ToLower(evt.RepoName), ".git")
+		cleanRepoName := strings.TrimSuffix(strings.ToLower(repoName), ".git")
+		if cleanEvtRepo != cleanRepoName && normalizeRepoName(evt.RepoName) != normRepo {
 			continue
 		}
 		// Check if this event's changes contain our commit hash
@@ -782,6 +789,17 @@ func findEventIDForCommit(commitHash, workDir string) string {
 		}
 	}
 	return ""
+}
+
+func normalizeRepoName(name string) string {
+	name = strings.TrimSuffix(strings.ToLower(strings.TrimSpace(name)), ".git")
+	var b strings.Builder
+	for _, r := range name {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
 }
 
 // pollActionDByEventID polls ActionD's /api/actions/by-event/{event_id} endpoint

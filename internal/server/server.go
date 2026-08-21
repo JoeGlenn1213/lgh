@@ -365,6 +365,18 @@ func (s *Server) handleDebugEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Security: CSRF/origin gate. RemoteAddr==127.0.0.1 also matches the
+	// local *browser*, so a malicious webpage could otherwise fire a
+	// no-preflight form POST here and forge events (e.g. git.push) that
+	// reach ActionD's plugin pipeline. Browsers always attach an Origin
+	// header to such requests; legitimate local tools (curl, replay CLI)
+	// send none — so any request carrying an Origin is rejected.
+	if origin := r.Header.Get("Origin"); origin != "" {
+		ui.Warning("Blocked browser-origin attempt to access /debug/events from %s", origin)
+		http.Error(w, "Forbidden: browser origins not allowed", http.StatusForbidden)
+		return
+	}
+
 	var evt event.Event
 	if err := json.NewDecoder(r.Body).Decode(&evt); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)

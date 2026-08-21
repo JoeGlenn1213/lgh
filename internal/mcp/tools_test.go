@@ -99,3 +99,23 @@ func TestWithInteger(t *testing.T) {
 		t.Errorf("plain type = %v, want number (untouched)", plain["type"])
 	}
 }
+
+func TestNormalizeRepoName(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"ActionD-Web.git", "actiondweb"},
+		{"actiond-web", "actiondweb"},
+		{"my_repo_name.git", "myreponame"},
+		{"LocalGitHub", "localgithub"},
+	}
+
+	for _, tt := range tests {
+		got := normalizeRepoName(tt.input)
+		if got != tt.want {
+			t.Errorf("normalizeRepoName(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+

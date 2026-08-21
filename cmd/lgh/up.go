@@ -320,6 +320,10 @@ func waitAndShowCIResults(cwd string) {
 
 	// Find event_id from LGH event log
 	repoName := filepath.Base(cwd)
+	reg := registry.New()
+	if repoMapping, regErr := reg.FindBySourcePath(cwd); regErr == nil && repoMapping != nil && repoMapping.Name != "" {
+		repoName = repoMapping.Name
+	}
 	eventID, eventIDErr := findEventIDFromLog(commitHash, repoName)
 	if eventIDErr != nil {
 		// Non-fatal: skip CI wait, but make it visible.
@@ -490,7 +494,10 @@ func findEventIDFromLog(commitHash, repoName string) (string, error) {
 		if evt.Type != "git.push" {
 			continue
 		}
-		if evt.Repo != repoName+".git" && evt.Repo != repoName {
+		// Match by repo name (case-insensitive, with/without .git, and normalized)
+		cleanEvtRepo := strings.TrimSuffix(strings.ToLower(evt.Repo), ".git")
+		cleanRepoName := strings.TrimSuffix(strings.ToLower(repoName), ".git")
+		if cleanEvtRepo != cleanRepoName && normalizeRepoName(evt.Repo) != normalizeRepoName(repoName) {
 			continue
 		}
 		if payload, ok := evt.Payload["changes"].(map[string]interface{}); ok {
@@ -511,3 +518,15 @@ func findEventIDFromLog(commitHash, repoName string) (string, error) {
 	}
 	return "", nil
 }
+
+func normalizeRepoName(name string) string {
+	name = strings.TrimSuffix(strings.ToLower(strings.TrimSpace(name)), ".git")
+	var b strings.Builder
+	for _, r := range name {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+

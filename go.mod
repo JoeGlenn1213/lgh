@@ -2,7 +2,7 @@ module github.com/JoeGlenn1213/lgh
 
 go 1.23.0
 
-toolchain go1.23.4
+toolchain go1.25.13
 
 require (
 	github.com/fatih/color v1.18.0
