@@ -1,7 +1,7 @@
 # LGH Makefile
 # Build, test, and release automation
 
-VERSION ?= $(shell sed -n 's/^[[:space:]]*Version = "\(.*\)"/\1/p' cmd/lgh/main.go)
+VERSION ?= $(shell sed -n 's/^[[:space:]]*var[[:space:]][[:space:]]*Version[[:space:]]*= "\(.*\)"/\1/p' internal/version/version.go)
 BUILD_DATE := $(shell date +%Y-%m-%d)
 GIT_COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 LDFLAGS := -s -w -X main.Version=$(VERSION) -X main.BuildDate=$(BUILD_DATE) -X main.GitCommit=$(GIT_COMMIT)

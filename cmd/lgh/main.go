@@ -29,11 +29,13 @@ import (
 
 	"github.com/JoeGlenn1213/lgh/internal/config"
 	"github.com/JoeGlenn1213/lgh/internal/event"
+	"github.com/JoeGlenn1213/lgh/internal/version"
 )
 
 var (
-	// Version information
-	Version = "1.3.1"
+	// Version reads the single source of truth in internal/version.
+	// The Makefile extracts the literal from there for -ldflags -X main.Version.
+	Version = version.Version
 	// BuildDate is the timestamp when the binary was built
 	BuildDate = "unknown"
 	// GitCommit is the commit hash of the build

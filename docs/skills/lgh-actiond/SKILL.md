@@ -78,6 +78,18 @@ actiond plugins       # 管理插件配置 (enable/disable/create)
 
 ## MCP 工具 — LGH（`lgh mcp` 启动）
 
+### 启动方式与传输（stdio / sse / streamable-http）
+```
+lgh mcp                  # stdio（默认，Cursor / Claude Desktop 用）
+lgh mcp --mode sse --port 9419                 # SSE，端点 http://<host>:9419/sse
+lgh mcp --mode streamable-http --port 9419     # Streamable HTTP，端点 http://<host>:9419/mcp
+```
+- **stdio**：模型/客户端 spawn 子进程（DSH overlay 里 `transport: stdio`）。
+- **streamable-http**：DeepSeek Harness 等 HTTP 客户端用 `transport: streamable-http` +
+  `url: http://127.0.0.1:9419/mcp`。服务须先以 `--mode streamable-http` 起在前台。
+- **sse**：旧式 HTTP 传输，端点 `/sse`（+ `/message`）。
+- `--host` 默认 `127.0.0.1`；局域网暴露改 `--host 0.0.0.0`（注意无鉴权，谨慎）。
+
 ### lgh_status
 ```
 描述：LGH + ActionD 统一健康检查：运行状态、PID、地址、仓库数量、ActionD 守护状态
@@ -475,7 +487,9 @@ ActionD 启动时连接 LGH 的 Unix Socket，如果 socket 还没创建就失�
 写文档时不能只看代码——必须验证：
 - CLI 命令：跑 `<tool> --help` 确认实际子命令名（如 `actiond list` ≠ `actiond plugins`）
 - API 端点：实际 curl 测试（如 ActionD 没有 `/health`，返回 404）
-- 版本号：检查 CLI 版本（`cmd/*/main.go`）和 MCP 版本（`internal/mcp/server.go`）是否一致
+- 版本号：唯一事实源是各仓 `internal/version/version.go`（CLI/MCP/Makefile 均从此读取；
+  Makefile 用 sed 提取该文件里的字面量注入 ldflags）。别再同时改 `cmd/*/main.go` 和
+  `internal/mcp/server.go`——改一处 `internal/version/version.go` 即可，防止再次漂移
 
 ### 9. 二进制候选验证（不要只靠 os.Stat）⚠️
 macOS 会 SIGKILL 未签名的二进制（exit 137），`os.Stat` 返回成功但执行必死。

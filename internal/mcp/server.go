@@ -22,18 +22,16 @@
 package mcp
 
 import (
+	"github.com/JoeGlenn1213/lgh/internal/version"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
-
-// Version is the MCP server version
-const Version = "1.3.0"
 
 // NewServer creates and configures the LGH MCP server
 func NewServer() *server.MCPServer {
 	s := server.NewMCPServer(
 		"lgh",
-		Version,
+		version.Version,
 		server.WithToolCapabilities(true),
 		server.WithResourceCapabilities(true, false),
 	)

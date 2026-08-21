@@ -22,7 +22,9 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"os"
+	"strconv"
 
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/spf13/cobra"
@@ -35,6 +37,7 @@ import (
 var (
 	mcpMode string
 	mcpPort int
+	mcpHost string
 )
 
 var mcpCmd = &cobra.Command{
@@ -43,11 +46,12 @@ var mcpCmd = &cobra.Command{
 	Long: `Start the LGH MCP server for AI agent integration.
 
 MCP (Model Context Protocol) allows AI tools like Cursor, Claude Desktop, 
-and other agents to interact with LGH programmatically.
+DeepSeek Harness and other agents to interact with LGH programmatically.
 
 Modes:
-  stdio - Standard I/O mode (for local AI clients)
-  sse   - Server-Sent Events mode (for web-based AI) [coming soon]
+  stdio           - Standard I/O mode (for local AI clients, default)
+  sse             - Server-Sent Events mode (endpoint http://<host>:<port>/sse)
+  streamable-http - Streamable HTTP mode (endpoint http://<host>:<port>/mcp)
 
 Tools available via MCP:
   - lgh_status: Get server status
@@ -69,14 +73,21 @@ Resources:
   # Or explicitly specify mode
   lgh mcp --mode stdio
 
+  # SSE mode (legacy HTTP transport)
+  lgh mcp --mode sse --host 127.0.0.1 --port 9419
+
+  # Streamable HTTP mode (for DeepSeek Harness / web clients)
+  lgh mcp --mode streamable-http --port 9419
+
   # Test with JSON-RPC
   echo '{"jsonrpc":"2.0","method":"tools/list","id":1}' | lgh mcp`,
 	RunE: runMcp,
 }
 
 func init() {
-	mcpCmd.Flags().StringVar(&mcpMode, "mode", "stdio", "Transport mode: stdio (default) or sse")
-	mcpCmd.Flags().IntVar(&mcpPort, "port", 9419, "Port for SSE mode (default: 9419)")
+	mcpCmd.Flags().StringVar(&mcpMode, "mode", "stdio", "Transport mode: stdio (default), sse, or streamable-http")
+	mcpCmd.Flags().IntVar(&mcpPort, "port", 9419, "Port for sse/streamable-http mode (default: 9419)")
+	mcpCmd.Flags().StringVar(&mcpHost, "host", "127.0.0.1", "Listen address for sse/streamable-http mode (default: 127.0.0.1)")
 	rootCmd.AddCommand(mcpCmd)
 }
 
@@ -90,10 +101,17 @@ func runMcp(_ *cobra.Command, _ []string) error {
 	case "stdio":
 		return runStdioMode()
 	case "sse":
-		return fmt.Errorf("SSE mode is not yet implemented")
+		return runSSEMode()
+	case "streamable-http":
+		return runStreamableHTTPMode()
 	default:
-		return fmt.Errorf("unknown mode: %s (use 'stdio' or 'sse')", mcpMode)
+		return fmt.Errorf("unknown mode: %s (use 'stdio', 'sse' or 'streamable-http')", mcpMode)
 	}
+}
+
+// listenAddr builds the host:port address shared by the HTTP transports.
+func listenAddr() string {
+	return net.JoinHostPort(mcpHost, strconv.Itoa(mcpPort))
 }
 
 func runStdioMode() error {
@@ -106,6 +124,41 @@ func runStdioMode() error {
 	// Start the server with stdio transport
 	if err := server.ServeStdio(mcpServer); err != nil {
 		return fmt.Errorf("MCP server error: %w", err)
+	}
+
+	return nil
+}
+
+// runSSEMode serves the MCP server over Server-Sent Events (legacy HTTP
+// transport) at http://<host>:<port>/sse.
+func runSSEMode() error {
+	mcpServer := lghMcp.NewServer()
+	sseServer := server.NewSSEServer(mcpServer)
+
+	addr := listenAddr()
+	fmt.Fprintln(os.Stderr, ui.Green("LGH MCP Server started (SSE mode)"))
+	fmt.Fprintf(os.Stderr, "SSE endpoint: http://%s/sse\n", addr)
+
+	if err := sseServer.Start(addr); err != nil {
+		return fmt.Errorf("MCP SSE server error: %w", err)
+	}
+
+	return nil
+}
+
+// runStreamableHTTPMode serves the MCP server over Streamable HTTP
+// (MCP 2025-03-26 transport, used by DeepSeek Harness and web clients)
+// at http://<host>:<port>/mcp.
+func runStreamableHTTPMode() error {
+	mcpServer := lghMcp.NewServer()
+	httpServer := server.NewStreamableHTTPServer(mcpServer)
+
+	addr := listenAddr()
+	fmt.Fprintln(os.Stderr, ui.Green("LGH MCP Server started (streamable-http mode)"))
+	fmt.Fprintf(os.Stderr, "Streamable HTTP endpoint: http://%s/mcp\n", addr)
+
+	if err := httpServer.Start(addr); err != nil {
+		return fmt.Errorf("MCP streamable-http server error: %w", err)
 	}
 
 	return nil
