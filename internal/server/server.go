@@ -121,13 +121,16 @@ func (s *Server) Start() error {
 	// Create server with security hardening
 	addr := fmt.Sprintf("%s:%d", s.cfg.BindAddress, s.cfg.Port)
 	s.httpServer = &http.Server{
-		Addr:              addr,
-		Handler:           mux,
-		ReadTimeout:       30 * time.Minute, // Long timeout for large pushes
-		WriteTimeout:      30 * time.Minute,
-		IdleTimeout:       120 * time.Second,
-		ReadHeaderTimeout: 10 * time.Second, // SECURITY: Prevent slowloris attacks
-		MaxHeaderBytes:    1 << 20,          // SECURITY: 1MB max header size
+		Addr:    addr,
+		Handler: browserWriteGate(mux),
+		// Long timeout for large pushes
+		ReadTimeout: 30 * time.Minute,
+		WriteTimeout: 30 * time.Minute,
+		IdleTimeout:  120 * time.Second,
+		// SECURITY: Prevent slowloris attacks
+		ReadHeaderTimeout: 10 * time.Second,
+		// SECURITY: 1MB max header size
+		MaxHeaderBytes: 1 << 20,
 	}
 
 	// Check if port is available
@@ -344,6 +347,29 @@ func (s *Server) virtualOwnerMiddleware(next http.Handler) http.Handler {
 }
 
 // handleDebugEvents handles event injection via HTTP
+// browserWriteGate rejects write-method requests that carry an Origin header.
+//
+// LGH serves non-browser clients only (git CLI, ActionD callbacks, local
+// tools — none send Origin). A browser on this machine is also 127.0.0.1,
+// so without this gate a malicious webpage could fire no-preflight form
+// POSTs at write endpoints (commit-status forgery, event injection, even
+// git smart-HTTP paths). GETs stay open: without CORS headers a cross-origin
+// page cannot read responses anyway.
+func browserWriteGate(next *http.ServeMux) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet, http.MethodHead, http.MethodOptions:
+		default:
+			if origin := r.Header.Get("Origin"); origin != "" {
+				ui.Warning("Blocked browser-origin %s to %s", r.Method, r.URL.Path)
+				http.Error(w, "Forbidden: browser origins not allowed", http.StatusForbidden)
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func (s *Server) handleDebugEvents(w http.ResponseWriter, r *http.Request) {
 	// Security: Only allow POST
 	if r.Method != http.MethodPost {
