@@ -226,6 +226,26 @@ lgh mcp --mode streamable-http --port 9419     # Streamable HTTP，端点 http:/
       TARGETED 档与 canary 自动降级通道未落地，FAST pass 不得视为充分验证。
 ```
 
+### actiond_handoff_pack
+```
+描述：生成 Handoff Package（ASSURANCE Phase C）——按 §2 契约聚合
+      git log + ActionD verdict + RMS task report，输出结构化 JSON +
+      自包含 Markdown（Gate 实验中接手 Agent 的唯一输入）。
+参数：
+  path (可选) — 仓库路径（默认当前目录）
+  task_id (可选) — 任务 id；提供后查询 RMS task report 补全 goal/decisions
+  from_agent / to_agent (可选) — 交接发起方/接手方（如 dsh:codex）
+  suggested_next_action (可选) — 建议接手方执行的下一步
+  goal / pending_work (可选) — 目标一句话 / 待办清单（逗号分隔）
+  ttl_hours (可选) — 有效期小时（默认 24）
+返回：HandoffPackage JSON——envelope（from/to/project/revision/expires）+
+      payload（task/goal/current_state 三态 L0-4/completed/pending/decisions/
+      known_failures/verification_state/expected_revision/next_action）+
+      validation 警告清单 + markdown。
+注意：validateHandoff 只给警告不硬失败（降级包好过没有包）；
+      验证状态 unknown 时接手方不得把当前状态当作已验证。
+```
+
 ### actiond_status
 ```
 描述：获取 ActionD 服务器状态（运行状态、版本、统计信息）
