@@ -205,6 +205,24 @@ lgh mcp --mode streamable-http --port 9419     # Streamable HTTP，端点 http:/
 
 ## MCP 工具 — ActionD（`actiond mcp` 启动）
 
+### actiond_run_report
+```
+描述：Goal Run Report（ASSURANCE Phase A 骨架，零新存储投影）。
+      聚合 git log + ActionD 任务 + RMS task report，回答六问：
+      做了什么 / 为什么做 / 验过没有 / 可信吗 / 能交接吗 / 退得回吗。
+参数：
+  path (可选) — 仓库路径（默认当前目录）
+  commit (可选) — 聚焦某个 commit（缺省为最近 N 个提交）
+  task_id (可选) — RMS task id；提供后查询任务报告与交接状态
+  project_id (可选) — RMS project id（默认取仓库名）
+  limit (可选) — git log 条数（默认 10）
+返回：RunReport JSON——三态 verdict（pass/fail/unknown，沉默不是通过）、
+      intent/recovery 证据等级 L0-4、coverage 双数（native/reconstructed，
+      反作弊：reconstructed 永不计 native）、Limitations 自白清单。
+注意：RMS 未配置（RMS_API_KEY 未设）时 handoff 显式 unknown；
+      verdict 分档与 verifier 出处未落地（Phase B），所有 pass 仅视为 FAST 低置信。
+```
+
 ### actiond_status
 ```
 描述：获取 ActionD 服务器状态（运行状态、版本、统计信息）
