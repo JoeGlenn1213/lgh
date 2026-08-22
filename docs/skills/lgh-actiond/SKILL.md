@@ -219,8 +219,11 @@ lgh mcp --mode streamable-http --port 9419     # Streamable HTTP，端点 http:/
 返回：RunReport JSON——三态 verdict（pass/fail/unknown，沉默不是通过）、
       intent/recovery 证据等级 L0-4、coverage 双数（native/reconstructed，
       反作弊：reconstructed 永不计 native）、Limitations 自白清单。
+      Phase B 已落地：tier 分档（profile→FAST/FULL，TARGETED 未实现）、
+      promotion_allowed 晋升闸门（仅 FULL pass 可视为充分验证）、
+      verifier 出处（plugin_version）与 Trust 区 MaxTier/HasFullPass/VerifierProvenance。
 注意：RMS 未配置（RMS_API_KEY 未设）时 handoff 显式 unknown；
-      verdict 分档与 verifier 出处未落地（Phase B），所有 pass 仅视为 FAST 低置信。
+      TARGETED 档与 canary 自动降级通道未落地，FAST pass 不得视为充分验证。
 ```
 
 ### actiond_status
