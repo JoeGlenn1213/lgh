@@ -307,6 +307,18 @@ lgh mcp --mode streamable-http --port 9419     # Streamable HTTP，端点 http:/
 参数：id (必填) — 任务 ID
 ```
 
+### actiond_cleanup
+```
+描述：删除旧的终态任务（done/failed/cancelled）及其 artifact 目录，回收磁盘空间。
+      只删终态任务；pending/running 永远保留。默认保留 7 天。
+参数：
+  days (可选, 默认 7) — 保留天数；0 = 删除全部终态任务
+  all  (可选)         — true 等价于 days=0
+用法：~/.localgithub/actions 膨胀时调用（任务目录里的 Go 缓存是主因，
+      插件已改用共享缓存目录，新任务目录只含几 KB 的结果文件）
+CLI 等价：actiond cleanup [--days N] [--all]
+```
+
 ### actiond_plugin_enable / disable
 ```
 描述：启用/禁用指定插件。禁用后即使事件条件满足也不会触发
