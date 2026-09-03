@@ -192,9 +192,14 @@ func TestRegistryFindBySourcePath(t *testing.T) {
 	mappingsFile := filepath.Join(tmpDir, "mappings.yaml")
 	r := NewWithPath(mappingsFile)
 
-	r.Add("test-repo", "/source/path", "/bare/path")
+	// Use platform-native absolute paths: FindBySourcePath normalizes the
+	// query via filepath.Abs, which on Windows rewrites a unix-style path
+	// (e.g. "/source/path" -> "C:\source\path") and would never match.
+	source := filepath.Join(tmpDir, "source")
+	bare := filepath.Join(tmpDir, "bare")
+	r.Add("test-repo", source, bare)
 
-	repo, err := r.FindBySourcePath("/source/path")
+	repo, err := r.FindBySourcePath(source)
 	if err != nil {
 		t.Fatalf("FindBySourcePath() failed: %v", err)
 	}

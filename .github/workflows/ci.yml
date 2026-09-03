@@ -34,12 +34,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.25'
           cache: false
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        # v7 of the action installs golangci-lint v2.x, which is built with a
+        # Go new enough to analyze this module (v1.60/go1.23 cannot handle
+        # toolchain go1.25.13 — typecheck fails with "undefined" imports).
+        uses: golangci/golangci-lint-action@v7
         with:
-          version: v1.60
+          version: latest
 
   check-license:
     name: License Check
@@ -48,7 +51,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.25'
       - name: Install addlicense
         run: go install github.com/google/addlicense@latest
       - name: Check License Headers
@@ -65,7 +68,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.25'
       - name: Build
         shell: bash
         run: |

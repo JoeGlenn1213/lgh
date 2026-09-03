@@ -18,73 +18,83 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+version: "2"
 run:
-  timeout: 5m
   tests: true
-
-linters-settings:
-  govet:
-    enable:
-      - shadow
-  gocyclo:
-    min-complexity: 15
-  goconst:
-    min-len: 2
-    min-occurrences: 3  # 放宽：至少出现3次才报
-  misspell:
-    locale: US
-  lll:
-    line-length: 140
-  goimports:
-    local-prefixes: github.com/JoeGlenn1213/lgh
-  revive:
-    rules:
-      # 放宽：未导出类型不强制注释
-      - name: exported
-        arguments:
-          - checkPrivateReceivers
-          - disableStutteringCheck
-      # 放宽：允许 _ 参数
-      - name: unused-parameter
-        disabled: true
-  gosec:
-    excludes:
-      - G204  # Subprocess launched with variable - 我们已经用 nolint 处理
-      - G304  # File path from variable - CLI 工具常见场景
-
 linters:
-  disable-all: true
+  default: none
   enable:
+    - gosec
     - govet
     - ineffassign
-    - staticcheck
-    - gosimple
-    - unused
     - misspell
-    - goimports
     - revive
-    - typecheck
-    - gofmt
-    - gosec
-
+    - staticcheck
+    - unused
+  settings:
+    goconst:
+      min-len: 2
+      min-occurrences: 3
+    gocyclo:
+      min-complexity: 15
+    gosec:
+      excludes:
+        - G204
+        - G304
+    govet:
+      enable:
+        - shadow
+    lll:
+      line-length: 140
+    misspell:
+      locale: US
+    revive:
+      rules:
+        - name: exported
+          arguments:
+            - checkPrivateReceivers
+            - disableStutteringCheck
+        - name: unused-parameter
+          disabled: true
+  exclusions:
+    generated: lax
+    rules:
+      - linters:
+          - gosec
+          - revive
+        path: _test\.go
+      - linters:
+          - revive
+        path: cmd/
+        text: 'exported:'
+      - linters:
+          - revive
+        path: internal/
+        text: 'exported:'
+      # "cancelled" is the wire-format job status shared with ActionD and
+      # actiond-web — keep the British spelling (v2 misspell has no
+      # ignore-words setting, so exclude by message text).
+      - linters:
+          - misspell
+        text: '`cancelled` is a misspelling'
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 issues:
-  exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
-  exclude-rules:
-    # 测试文件放宽
-    - path: _test\.go
-      linters:
-        - gosec
-        - revive
-    # main 包不强制导出注释
-    - path: cmd/
-      linters:
-        - revive
-      text: "exported:"
-    # internal 包不强制导出注释
-    - path: internal/
-      linters:
-        - revive
-      text: "exported:"
-
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/JoeGlenn1213/lgh
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

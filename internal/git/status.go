@@ -23,10 +23,10 @@ type CommitStatus struct {
 
 // CommitStatusReport represents the aggregate status of a commit
 type CommitStatusReport struct {
-	CommitSHA string          `json:"commit_sha"`
-	Overall   string          `json:"overall"` // "pending", "success", "failure", "error"
-	Statuses  []CommitStatus  `json:"statuses"`
-	UpdatedAt time.Time       `json:"updated_at"`
+	CommitSHA string         `json:"commit_sha"`
+	Overall   string         `json:"overall"` // "pending", "success", "failure", "error"
+	Statuses  []CommitStatus `json:"statuses"`
+	UpdatedAt time.Time      `json:"updated_at"`
 }
 
 // StatusStore manages commit status storage
@@ -49,7 +49,7 @@ func (s *StatusStore) Update(repo, commitSHA string, status CommitStatus) error 
 
 	// Ensure directory exists
 	repoDir := filepath.Join(s.dataDir, sanitizeRepoName(repo))
-	if err := os.MkdirAll(repoDir, 0755); err != nil {
+	if err := os.MkdirAll(repoDir, 0750); err != nil {
 		return fmt.Errorf("failed to create status directory: %w", err)
 	}
 
@@ -112,7 +112,7 @@ func (s *StatusStore) writeReport(path string, report *CommitStatusReport) error
 	if err != nil {
 		return fmt.Errorf("failed to marshal status: %w", err)
 	}
-	return os.WriteFile(path, data, 0644)
+	return os.WriteFile(path, data, 0600)
 }
 
 func sanitizeRepoName(repo string) string {
@@ -137,11 +137,11 @@ func calculateOverallStatus(statuses []CommitStatus) string {
 	if len(statuses) == 0 {
 		return "pending"
 	}
-	
+
 	hasFailure := false
 	hasError := false
 	hasPending := false
-	
+
 	for _, cs := range statuses {
 		switch cs.Status {
 		case "failure":
@@ -152,7 +152,7 @@ func calculateOverallStatus(statuses []CommitStatus) string {
 			hasPending = true
 		}
 	}
-	
+
 	if hasFailure {
 		return "failure"
 	}

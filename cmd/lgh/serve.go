@@ -106,6 +106,7 @@ func runServe(_ *cobra.Command, _ []string) error {
 
 	if !isLocalhost {
 		if !isSafeMode && !allowUnsafe {
+			//nolint:staticcheck // ST1005: deliberate multi-line, punctuated security message for CLI users
 			return fmt.Errorf("SECURITY ERROR: Binding to %s exposes LGH to the network without protection.\n"+
 				"To proceed, you must enable Authentication, Read-Only mode, or use --allow-unsafe.", cfg.BindAddress)
 		}

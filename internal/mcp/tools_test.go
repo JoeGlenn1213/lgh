@@ -118,4 +118,3 @@ func TestNormalizeRepoName(t *testing.T) {
 		}
 	}
 }
-

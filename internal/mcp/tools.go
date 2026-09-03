@@ -406,8 +406,8 @@ func handleUpDryRun(_ context.Context, request mcp.CallToolRequest) (*mcp.CallTo
 	}
 
 	result := map[string]interface{}{
-		"path":     workDir,
-		"dry_run":  true,
+		"path":    workDir,
+		"dry_run": true,
 	}
 
 	// Check git repo state
@@ -490,7 +490,8 @@ func handleSave(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallTool
 		}
 	}
 
-	ignore.EnsureGitignore(workDir)
+	// Best-effort: a failed .gitignore write must not abort registration.
+	_, _ = ignore.EnsureGitignore(workDir)
 	if !git.IsGitRepo(workDir) {
 		if err := git.InitRepo(workDir); err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("failed to initialize git repository: %v", err)), nil
@@ -817,8 +818,9 @@ func pollActionDByEventID(eventID string, timeout time.Duration) []string {
 		}
 
 		var jobs []map[string]interface{}
-		json.NewDecoder(resp.Body).Decode(&jobs)
-		resp.Body.Close()
+		// A decode error leaves jobs empty, handled like "no jobs yet".
+		_ = json.NewDecoder(resp.Body).Decode(&jobs)
+		_ = resp.Body.Close()
 
 		if len(jobs) == 0 {
 			time.Sleep(500 * time.Millisecond)

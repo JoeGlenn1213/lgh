@@ -307,7 +307,7 @@ func waitAndShowCIResults(cwd string) {
 	if err != nil {
 		return // ActionD not running, skip silently
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	// Get commit hash
 	cmd := exec.Command("git", "rev-parse", "HEAD")
@@ -347,8 +347,10 @@ func waitAndShowCIResults(cwd string) {
 			time.Sleep(1 * time.Second)
 			continue
 		}
-		json.NewDecoder(resp.Body).Decode(&jobs)
-		resp.Body.Close()
+		// A decode error leaves jobs empty, which the retry loop handles
+		// the same way as "no jobs yet".
+		_ = json.NewDecoder(resp.Body).Decode(&jobs)
+		_ = resp.Body.Close()
 
 		if len(jobs) == 0 {
 			time.Sleep(1 * time.Second)
@@ -529,4 +531,3 @@ func normalizeRepoName(name string) string {
 	}
 	return b.String()
 }
-

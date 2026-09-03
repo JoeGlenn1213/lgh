@@ -192,6 +192,6 @@ func NewForTest(dataDir string) *Config {
 	instance = cfg
 	once = sync.Once{}
 	once.Do(func() {}) // Mark as done so Load() won't overwrite it
-	instance = cfg    // Set again after once.Do
+	instance = cfg     // Set again after once.Do
 	return cfg
 }

@@ -124,7 +124,7 @@ func (s *Server) Start() error {
 		Addr:    addr,
 		Handler: browserWriteGate(mux),
 		// Long timeout for large pushes
-		ReadTimeout: 30 * time.Minute,
+		ReadTimeout:  30 * time.Minute,
 		WriteTimeout: 30 * time.Minute,
 		IdleTimeout:  120 * time.Second,
 		// SECURITY: Prevent slowloris attacks
@@ -427,16 +427,16 @@ func (s *Server) handleAPIRepos(w http.ResponseWriter, r *http.Request) {
 	// Parse path: /api/repos/{repo}/commits/{sha}/status
 	path := strings.TrimPrefix(r.URL.Path, "/api/repos/")
 	parts := strings.Split(path, "/")
-	
+
 	// Expected: {repo}/commits/{sha}/status
 	if len(parts) < 4 || parts[1] != "commits" || parts[3] != "status" {
 		http.Error(w, "invalid path, expected /api/repos/{repo}/commits/{sha}/status", http.StatusBadRequest)
 		return
 	}
-	
+
 	repo := parts[0]
 	sha := parts[2]
-	
+
 	s.handleCommitStatus(w, r, repo, sha)
 }
 
@@ -452,14 +452,14 @@ func (s *Server) handleCommitStatus(w http.ResponseWriter, r *http.Request, repo
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(report)
-		
+
 	case http.MethodPost:
 		var status git.CommitStatus
 		if err := json.NewDecoder(r.Body).Decode(&status); err != nil {
 			http.Error(w, "invalid JSON body", http.StatusBadRequest)
 			return
 		}
-		
+
 		// Validate
 		status.CommitSHA = sha
 		if status.Status == "" {
@@ -472,21 +472,21 @@ func (s *Server) handleCommitStatus(w http.ResponseWriter, r *http.Request, repo
 			http.Error(w, "invalid status, must be one of: pending, success, failure, error, cancelled", http.StatusBadRequest)
 			return
 		}
-		
+
 		if err := s.statusStore.Update(repo, sha, status); err != nil {
 			http.Error(w, fmt.Sprintf("failed to update status: %v", err), http.StatusInternalServerError)
 			return
 		}
-		
+
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]string{
-			"status":  "updated",
-			"repo":    repo,
-			"commit":  sha,
-			"plugin":  status.Plugin,
-			"result":  status.Status,
+			"status": "updated",
+			"repo":   repo,
+			"commit": sha,
+			"plugin": status.Plugin,
+			"result": status.Status,
 		})
-		
+
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}

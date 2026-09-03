@@ -1,0 +1,90 @@
+# Copyright (c) 2025 JoeGlenn1213
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+run:
+  timeout: 5m
+  tests: true
+
+linters-settings:
+  govet:
+    enable:
+      - shadow
+  gocyclo:
+    min-complexity: 15
+  goconst:
+    min-len: 2
+    min-occurrences: 3  # 放宽：至少出现3次才报
+  misspell:
+    locale: US
+  lll:
+    line-length: 140
+  goimports:
+    local-prefixes: github.com/JoeGlenn1213/lgh
+  revive:
+    rules:
+      # 放宽：未导出类型不强制注释
+      - name: exported
+        arguments:
+          - checkPrivateReceivers
+          - disableStutteringCheck
+      # 放宽：允许 _ 参数
+      - name: unused-parameter
+        disabled: true
+  gosec:
+    excludes:
+      - G204  # Subprocess launched with variable - 我们已经用 nolint 处理
+      - G304  # File path from variable - CLI 工具常见场景
+
+linters:
+  disable-all: true
+  enable:
+    - govet
+    - ineffassign
+    - staticcheck
+    - gosimple
+    - unused
+    - misspell
+    - goimports
+    - revive
+    - typecheck
+    - gofmt
+    - gosec
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-rules:
+    # 测试文件放宽
+    - path: _test\.go
+      linters:
+        - gosec
+        - revive
+    # main 包不强制导出注释
+    - path: cmd/
+      linters:
+        - revive
+      text: "exported:"
+    # internal 包不强制导出注释
+    - path: internal/
+      linters:
+        - revive
+      text: "exported:"
+

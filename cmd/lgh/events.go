@@ -184,7 +184,8 @@ func printEventLine(line string) {
 	}
 
 	payloadStr := ""
-	if evt.Type == event.GitPush {
+	switch evt.Type {
+	case event.GitPush:
 		if changes, ok := evt.Payload["changes"].(map[string]interface{}); ok {
 			var refs []string
 			for ref, val := range changes {
@@ -221,7 +222,7 @@ func printEventLine(line string) {
 			}
 			payloadStr = strings.Join(refs, ", ")
 		}
-	} else if evt.Type == event.RepoAdded {
+	case event.RepoAdded:
 		if bare, ok := evt.Payload["bare"].(string); ok {
 			payloadStr = filepath.Base(bare)
 		}

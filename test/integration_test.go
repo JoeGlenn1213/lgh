@@ -59,8 +59,8 @@ func gitEnv(tmpHome string) []string {
 	isolated = append(isolated,
 		"HOME="+tmpHome,
 		"USERPROFILE="+tmpHome,
-		"GIT_CONFIG_NOSYSTEM=1",           // skip /etc/gitconfig
-		"GIT_CONFIG_GLOBAL=/dev/null",     // skip ~/.gitconfig
+		"GIT_CONFIG_NOSYSTEM=1",       // skip /etc/gitconfig
+		"GIT_CONFIG_GLOBAL=/dev/null", // skip ~/.gitconfig
 		"GIT_AUTHOR_NAME=Test",
 		"GIT_AUTHOR_EMAIL=test@example.com",
 		"GIT_COMMITTER_NAME=Test",

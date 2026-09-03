@@ -22,9 +22,10 @@
 package mcp
 
 import (
-	"github.com/JoeGlenn1213/lgh/internal/version"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+
+	"github.com/JoeGlenn1213/lgh/internal/version"
 )
 
 // NewServer creates and configures the LGH MCP server
