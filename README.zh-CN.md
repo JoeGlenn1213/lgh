@@ -26,25 +26,25 @@
 
 ### 方式 1: 直接下载预编译版本 (推荐)
 
-从 [Releases 页面](https://github.com/JoeGlenn1213/lgh/releases/latest) 下载对应系统的预编译二进制，资产命名为 `lgh-v<版本>-<系统>-<架构>`（如 `lgh-v1.2.2-darwin-arm64`），每个资产附带 `.sha256` 校验文件：
+下载适合你系统的预编译二进制（链接始终指向最新版本）：
 
-| 系统 | 架构 | 资产名 |
+| 系统 | 架构 | 下载 |
 |------|------|------|
-| macOS | Apple Silicon (M1/M2/M3) | `lgh-v<版本>-darwin-arm64` |
-| macOS | Intel | `lgh-v<版本>-darwin-amd64` |
-| Linux | x86_64 | `lgh-v<版本>-linux-amd64` |
-| Linux | ARM64 | `lgh-v<版本>-linux-arm64` |
-| Windows | x86_64 | `lgh-v<版本>-windows-amd64.exe` |
+| macOS | Apple Silicon (M1/M2/M3) | [lgh-darwin-arm64](https://github.com/JoeGlenn1213/lgh/releases/latest/download/lgh-darwin-arm64) |
+| macOS | Intel | [lgh-darwin-amd64](https://github.com/JoeGlenn1213/lgh/releases/latest/download/lgh-darwin-amd64) |
+| Linux | x86_64 | [lgh-linux-amd64](https://github.com/JoeGlenn1213/lgh/releases/latest/download/lgh-linux-amd64) |
+| Linux | ARM64 | [lgh-linux-arm64](https://github.com/JoeGlenn1213/lgh/releases/latest/download/lgh-linux-arm64) |
+| Windows | x86_64 | [lgh-windows-amd64.exe](https://github.com/JoeGlenn1213/lgh/releases/latest/download/lgh-windows-amd64.exe) |
 
 ```bash
 # 下载后安装（以 macOS ARM64 为例）
-chmod +x lgh-v<版本>-darwin-arm64
-sudo mv lgh-v<版本>-darwin-arm64 /usr/local/bin/lgh
+chmod +x lgh-darwin-arm64
+sudo mv lgh-darwin-arm64 /usr/local/bin/lgh
 ```
 
 #### Windows 安装
 
-1. 下载 `lgh-v<版本>-windows-amd64.exe`
+1. 下载 `lgh-windows-amd64.exe`
 2. 重命名为 `lgh.exe`
 3. 移动到系统 `%PATH%` 路径下的文件夹中 (例如 `C:\Program Files\lgh\`)
 4. 在 PowerShell 或 CMD 中运行

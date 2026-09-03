@@ -24,4 +24,4 @@
 package version
 
 // Version is the canonical LGH product version.
-var Version = "1.3.1"
+var Version = "1.3.2"

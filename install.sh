@@ -80,8 +80,9 @@ fi
 
 echo -e "${YELLOW}ℹ Detected: ${OS}/${ARCH}${NC}"
 
-# Release assets are named lgh-v<tag>-<os>-<arch> (see .github/workflows/release.yml).
-ASSET="lgh-v${VERSION}-${OS}-${ARCH}"
+# Release assets use unversioned names (lgh-<os>-<arch>), which lets the
+# README link them via /releases/latest/download/ redirects.
+ASSET="lgh-${OS}-${ARCH}"
 
 # Check if already installed
 if command -v lgh &> /dev/null; then
