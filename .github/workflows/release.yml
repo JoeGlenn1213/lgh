@@ -61,7 +61,8 @@ jobs:
             OUTPUT_NAME=${OUTPUT_NAME}.exe
           fi
           
-          go build -v -o ${OUTPUT_NAME} ./cmd/lgh
+          LDFLAGS="-s -w -X main.BuildDate=$(date +%Y-%m-%d) -X main.GitCommit=${GITHUB_SHA:0:7}"
+          go build -v -ldflags="$LDFLAGS" -o ${OUTPUT_NAME} ./cmd/lgh
           
           # Calculate SHA256
           sha256sum ${OUTPUT_NAME} > ${OUTPUT_NAME}.sha256
