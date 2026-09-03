@@ -1,7 +1,7 @@
 # LGH - LocalGitHub
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go" alt="Go Version">
+  <img src="https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat&logo=go" alt="Go Version">
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
   <img src="https://img.shields.io/badge/Platform-macOS%20|%20Linux%20|%20Windows-lightgrey" alt="Platform">
 </p>
@@ -28,25 +28,25 @@
 
 ### Option 1: Download Pre-built Binary (Recommended)
 
-Download the pre-built binary for your system:
+Download the pre-built binary for your system from the [Releases page](https://github.com/JoeGlenn1213/lgh/releases/latest) — assets are named `lgh-v<version>-<os>-<arch>` (e.g. `lgh-v1.2.2-darwin-arm64`), each with a `.sha256` checksum:
 
-| OS | Architecture | Download |
+| OS | Architecture | Asset |
 |------|------|------|
-| macOS | Apple Silicon (M1/M2/M3) | [lgh-1.2.0-darwin-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.2.0/lgh-1.2.0-darwin-arm64) |
-| macOS | Intel | [lgh-1.2.0-darwin-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.2.0/lgh-1.2.0-darwin-amd64) |
-| Linux | x86_64 | [lgh-1.2.0-linux-amd64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.2.0/lgh-1.2.0-linux-amd64) |
-| Linux | ARM64 | [lgh-1.2.0-linux-arm64](https://github.com/JoeGlenn1213/lgh/releases/download/v1.2.0/lgh-1.2.0-linux-arm64) |
-| Windows | x86_64 | [lgh-1.2.0-windows-amd64.exe](https://github.com/JoeGlenn1213/lgh/releases/download/v1.2.0/lgh-1.2.0-windows-amd64.exe) |
+| macOS | Apple Silicon (M1/M2/M3) | `lgh-v<version>-darwin-arm64` |
+| macOS | Intel | `lgh-v<version>-darwin-amd64` |
+| Linux | x86_64 | `lgh-v<version>-linux-amd64` |
+| Linux | ARM64 | `lgh-v<version>-linux-arm64` |
+| Windows | x86_64 | `lgh-v<version>-windows-amd64.exe` |
 
 ```bash
 # Install after download (macOS ARM64 example)
-chmod +x lgh-1.2.0-darwin-arm64
-sudo mv lgh-1.2.0-darwin-arm64 /usr/local/bin/lgh
+chmod +x lgh-v<version>-darwin-arm64
+sudo mv lgh-v<version>-darwin-arm64 /usr/local/bin/lgh
 ```
 
 #### Windows Installation
 
-1. Download `lgh-1.2.0-windows-amd64.exe`
+1. Download `lgh-v<version>-windows-amd64.exe`
 2. Rename to `lgh.exe`
 3. Move to a folder in your `%PATH%` (e.g., `C:\Program Files\lgh\`)
 4. Run in PowerShell or Command Prompt

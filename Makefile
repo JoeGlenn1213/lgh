@@ -4,7 +4,9 @@
 VERSION ?= $(shell sed -n 's/^[[:space:]]*var[[:space:]][[:space:]]*Version[[:space:]]*= "\(.*\)"/\1/p' internal/version/version.go)
 BUILD_DATE := $(shell date +%Y-%m-%d)
 GIT_COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-LDFLAGS := -s -w -X main.Version=$(VERSION) -X main.BuildDate=$(BUILD_DATE) -X main.GitCommit=$(GIT_COMMIT)
+# -X must target internal/version.Version (a constant-initialized var); the
+# main package copies it at init, so injecting main.Version would be a no-op.
+LDFLAGS := -s -w -X github.com/JoeGlenn1213/lgh/internal/version.Version=$(VERSION) -X main.BuildDate=$(BUILD_DATE) -X main.GitCommit=$(GIT_COMMIT)
 
 BINARY_NAME := lgh
 DIST_DIR := dist
@@ -41,10 +43,11 @@ release: clean
 	@$(MAKE) checksums
 
 
-# Generate SHA256 checksums for release binaries
+# Generate SHA256 checksums for release binaries (shasum on macOS,
+# sha256sum on Linux)
 checksums:
 	@echo "Generating checksums..."
-	@cd $(DIST_DIR) && shasum -a 256 lgh-* > checksums.txt
+	@cd $(DIST_DIR) && (shasum -a 256 lgh-* 2>/dev/null || sha256sum lgh-*) > checksums.txt
 	@echo "✓ Checksums saved to $(DIST_DIR)/checksums.txt"
 	@cat $(DIST_DIR)/checksums.txt
 

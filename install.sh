@@ -34,7 +34,21 @@ NC='\033[0m' # No Color
 INSTALL_DIR="/usr/local/bin"
 BINARY_NAME="lgh"
 REPO="JoeGlenn1213/lgh"
-VERSION="1.0.0"
+
+# Resolve the version to install: LGH_VERSION env override wins, otherwise
+# ask the GitHub API for the latest release tag (stripped of the leading v).
+if [ -n "$LGH_VERSION" ]; then
+    VERSION="$LGH_VERSION"
+else
+    VERSION=$(curl -sL "https://api.github.com/repos/$REPO/releases/latest" \
+        | grep '"tag_name":' | sed -E 's/.*"v?([^"]+)".*/\1/')
+    if [ -z "$VERSION" ]; then
+        echo -e "${RED}✗ Could not resolve the latest release (GitHub API unreachable?).${NC}"
+        echo -e "${RED}  Set LGH_VERSION=<x.y.z> and retry, or install from source:${NC}"
+        echo -e "${RED}  git clone https://github.com/$REPO && cd lgh && make build${NC}"
+        exit 1
+    fi
+fi
 
 echo -e "${BLUE}"
 echo "╔══════════════════════════════════════════════════════════════╗"
@@ -66,6 +80,9 @@ fi
 
 echo -e "${YELLOW}ℹ Detected: ${OS}/${ARCH}${NC}"
 
+# Release assets are named lgh-v<tag>-<os>-<arch> (see .github/workflows/release.yml).
+ASSET="lgh-v${VERSION}-${OS}-${ARCH}"
+
 # Check if already installed
 if command -v lgh &> /dev/null; then
     EXISTING_VERSION=$(lgh --version 2>&1 | head -1)
@@ -82,17 +99,19 @@ fi
 TMP_DIR=$(mktemp -d)
 trap "rm -rf $TMP_DIR" EXIT
 
-# For local installation (when not downloading from GitHub)
+# Check for local binary matching current architecture (dev convenience:
+# `make release` produces lgh-<version>-<os>-<arch> without the v prefix)
 LOCAL_BINARY=""
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Check for local binary matching current architecture
-if [ -f "$SCRIPT_DIR/dist/lgh-${OS}-${ARCH}" ]; then
-    LOCAL_BINARY="$SCRIPT_DIR/dist/lgh-${OS}-${ARCH}"
-    echo -e "${GREEN}✓ Found local binary: $LOCAL_BINARY${NC}"
-elif [ -f "$SCRIPT_DIR/dist/lgh" ]; then
+if [ -f "$SCRIPT_DIR/dist/lgh" ]; then
     LOCAL_BINARY="$SCRIPT_DIR/dist/lgh"
     echo -e "${GREEN}✓ Found local binary: $LOCAL_BINARY${NC}"
+else
+    LOCAL_BINARY=$(ls "$SCRIPT_DIR"/dist/lgh-*-"${OS}-${ARCH}" 2>/dev/null | head -1 || true)
+    if [ -n "$LOCAL_BINARY" ]; then
+        echo -e "${GREEN}✓ Found local binary: $LOCAL_BINARY${NC}"
+    fi
 fi
 
 if [ -n "$LOCAL_BINARY" ]; then
@@ -100,19 +119,19 @@ if [ -n "$LOCAL_BINARY" ]; then
     cp "$LOCAL_BINARY" "$TMP_DIR/lgh"
 else
     # Download from GitHub
-    DOWNLOAD_URL="https://github.com/$REPO/releases/download/v${VERSION}/lgh-${OS}-${ARCH}"
-    CHECKSUM_URL="https://github.com/$REPO/releases/download/v${VERSION}/checksums.txt"
-    
-    echo -e "${BLUE}ℹ Downloading LGH v${VERSION} from GitHub...${NC}"
-    
+    DOWNLOAD_URL="https://github.com/$REPO/releases/download/v${VERSION}/${ASSET}"
+    CHECKSUM_URL="${DOWNLOAD_URL}.sha256"
+
+    echo -e "${BLUE}ℹ Downloading LGH v${VERSION} (${ASSET}) from GitHub...${NC}"
+
     if command -v curl &> /dev/null; then
         curl -sL "$DOWNLOAD_URL" -o "$TMP_DIR/lgh" || {
             echo -e "${RED}✗ Download failed. Please check your internet connection.${NC}"
             exit 1
         }
         # Try to download and verify checksum
-        if curl -sL "$CHECKSUM_URL" -o "$TMP_DIR/checksums.txt" 2>/dev/null; then
-            EXPECTED_SHA=$(grep "lgh-${OS}-${ARCH}" "$TMP_DIR/checksums.txt" | awk '{print $1}')
+        if curl -sL "$CHECKSUM_URL" -o "$TMP_DIR/checksum.txt" 2>/dev/null; then
+            EXPECTED_SHA=$(awk '{print $1}' "$TMP_DIR/checksum.txt")
             if [ -n "$EXPECTED_SHA" ]; then
                 echo -e "${BLUE}ℹ Verifying checksum...${NC}"
                 if command -v sha256sum &> /dev/null; then
@@ -136,7 +155,7 @@ else
                     fi
                 fi
             else
-                echo -e "${YELLOW}⚠ No checksum found for lgh-${OS}-${ARCH}, skipping verification${NC}"
+                echo -e "${YELLOW}⚠ No checksum found for ${ASSET}, skipping verification${NC}"
             fi
         else
             echo -e "${YELLOW}⚠ Could not download checksums, skipping verification${NC}"
