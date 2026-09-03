@@ -37,12 +37,13 @@ jobs:
           go-version: '1.25'
           cache: false
       - name: golangci-lint
-        # v7 of the action installs golangci-lint v2.x, which is built with a
-        # Go new enough to analyze this module (v1.60/go1.23 cannot handle
-        # toolchain go1.25.13 — typecheck fails with "undefined" imports).
+        # v7 of the action installs golangci-lint v2.x, built with a Go new
+        # enough to analyze this module (v1.60/go1.23 cannot handle toolchain
+        # go1.25.13 — typecheck fails with "undefined" imports). Pinned so
+        # new lint releases can't break CI unannounced.
         uses: golangci/golangci-lint-action@v7
         with:
-          version: latest
+          version: v2.7.2
 
   check-license:
     name: License Check

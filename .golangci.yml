@@ -39,6 +39,9 @@ linters:
       min-complexity: 15
     gosec:
       excludes:
+        # G204/G304: subprocess & file access with variable paths — LGH is a
+        # local CLI/server whose core function is running git against
+        # registered repo paths and writing files under ~/.localgithub.
         - G204
         - G304
     govet:
@@ -77,6 +80,13 @@ linters:
       - linters:
           - misspell
         text: '`cancelled` is a misspelling'
+      # G702/G703 (taint-analysis variants of G204/G304, present in newer
+      # golangci-lint releases) flag LGH's core pattern of running git on
+      # registered repo paths. Excluded by text because older releases'
+      # config schema rejects the rule IDs.
+      - linters:
+          - gosec
+        text: 'G70[23]:'
     paths:
       - third_party$
       - builtin$
