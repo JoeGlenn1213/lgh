@@ -15,7 +15,7 @@ LGH (Local Git Hub) turns a local directory into a Git server: `lgh serve` expos
 - **Lint / fmt / security**: `make lint` (golangci-lint) / `make fmt` / `make security` (go vet).
 - **Package map**:
   - `internal/server` HTTP service (git-http-backend CGI wrapper), `internal/git` git operations, `internal/registry` repo registry.
-  - `internal/event` event bus (feeds ActionD), `internal/mcp` MCP server (10 tools), `internal/{tunnel,mdns,ignore,config,slog}`.
+  - `internal/event` event bus (feeds ActionD), `internal/mcp` MCP server (12 tools), `internal/{tunnel,mdns,ignore,config,slog}`.
   - `pkg/skill` shared Skill SDK, `pkg/ui` terminal UI.
 - **Runtime prerequisites (important)**:
   - LGH resolves its own path via `os.Executable()` — after code changes, copy the new binary over the running location (e.g. `cp dist/lgh bin/lgh` or the install path), otherwise you are testing the old binary.
