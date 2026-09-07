@@ -4,6 +4,7 @@
   <img src="https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat&logo=go" alt="Go Version">
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
   <img src="https://img.shields.io/badge/Platform-macOS%20|%20Linux%20|%20Windows-lightgrey" alt="Platform">
+  <a href="https://glama.ai/mcp/servers/JoeGlenn1213/lgh"><img src="https://glama.ai/mcp/servers/JoeGlenn1213/lgh/badges/score.svg" alt="MCP Server score on Glama"></a>
 </p>
 
 <p align="center">
