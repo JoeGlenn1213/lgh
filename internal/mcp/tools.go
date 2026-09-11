@@ -274,6 +274,72 @@ func handleRemove(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallTo
 	return mcp.NewToolResultText(fmt.Sprintf("Repository '%s' removed successfully", name)), nil
 }
 
+// normalizeCloneName accepts a repository name with or without a .git suffix
+// (agents often paste the basename of a clone_url) and returns the registry name.
+func normalizeCloneName(name string) string {
+	return strings.TrimSuffix(strings.TrimSpace(name), ".git")
+}
+
+// handleClone restores a working copy by cloning a registered repository from
+// the LGH server. It is the inverse of lgh_up: LGH state is only read, and the
+// only local effect is a newly created directory — existing files are never
+// touched.
+func handleClone(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	params := getArgsMap(request)
+	name := normalizeCloneName(getString(params, "name"))
+	dest := getString(params, "dest")
+
+	if name == "" {
+		return mcp.NewToolResultError("name is required"), nil
+	}
+
+	reg := registry.New()
+	if _, err := reg.Find(name); err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("repository '%s' is not registered with LGH; use lgh_list to see registered names", name)), nil
+	}
+
+	if running, _ := server.IsRunning(); !running {
+		return mcp.NewToolResultError("LGH server is not running; call lgh_serve_start first"), nil
+	}
+
+	cfg := config.Get()
+	cloneURL := fmt.Sprintf("http://%s:%d/lgh/%s.git", cfg.BindAddress, cfg.Port, name)
+
+	if dest == "" {
+		dest = name
+	}
+	absDest, err := filepath.Abs(dest)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Invalid destination: %v", err)), nil
+	}
+	if entries, readErr := os.ReadDir(absDest); readErr == nil && len(entries) > 0 {
+		return mcp.NewToolResultError(fmt.Sprintf("destination %s already exists and is not empty; lgh_clone never overwrites existing files", absDest)), nil
+	}
+
+	if err := git.CloneRepo(cloneURL, dest); err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("clone failed: %v", err)), nil
+	}
+
+	result := map[string]interface{}{
+		"success":     true,
+		"name":        name,
+		"clone_url":   cloneURL,
+		"destination": absDest,
+	}
+	if out, branchErr := exec.CommandContext(ctx, "git", "-C", absDest, "branch", "--show-current").Output(); branchErr == nil {
+		result["branch"] = strings.TrimSpace(string(out))
+	}
+	if out, headErr := exec.CommandContext(ctx, "git", "-C", absDest, "rev-parse", "--short", "HEAD").Output(); headErr == nil {
+		result["head"] = strings.TrimSpace(string(out))
+	}
+	if cfg.AuthEnabled {
+		result["note"] = "auth is enabled; if the clone succeeded, credentials came from the git credential helper"
+	}
+
+	data, _ := json.MarshalIndent(result, "", "  ")
+	return mcp.NewToolResultText(string(data)), nil
+}
+
 func handleUp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	params := getArgsMap(request)
 	message := getString(params, "message")

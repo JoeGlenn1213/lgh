@@ -120,6 +120,28 @@ func registerTools(s *server.MCPServer) {
 		handleRemove,
 	)
 
+	// lgh_clone - Clone/restore a repository (mutating: creates a new working
+	// directory; never destructive, never overwrites existing files)
+	s.AddTool(
+		mcp.NewTool("lgh_clone",
+			mcp.WithDescription("Clone a repository from the LGH local server into a new working directory on this machine — the restore side of the backup loop and the inverse of lgh_up. Use it to recover a working copy after data loss or to materialize an existing backup on a new machine: find the exact registered name with lgh_list, make sure the server is up (lgh_status, otherwise lgh_serve_start), then clone. The name may carry a .git suffix. Refuses with a clear error when the name is not registered, the server is not running, or the destination directory already exists and is not empty — it never overwrites existing files. Returns JSON with name, clone_url, destination (absolute path), and the checked-out branch and HEAD commit."),
+			mcp.WithToolAnnotation(mcp.ToolAnnotation{
+				Title:           "Clone (restore) a repository from LGH",
+				ReadOnlyHint:    mcp.ToBoolPtr(false),
+				DestructiveHint: mcp.ToBoolPtr(false),
+				OpenWorldHint:   mcp.ToBoolPtr(false),
+			}),
+			mcp.WithString("name",
+				mcp.Required(),
+				mcp.Description("Name of the repository registered with LGH, with or without .git suffix (find exact names with lgh_list)"),
+			),
+			mcp.WithString("dest",
+				mcp.Description("Optional destination directory (absolute path recommended; defaults to ./<name> under the MCP server's working directory)"),
+			),
+		),
+		handleClone,
+	)
+
 	// lgh_up - One-click commit and push (mutating, non-destructive)
 	s.AddTool(
 		mcp.NewTool("lgh_up",

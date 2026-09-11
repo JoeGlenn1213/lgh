@@ -118,3 +118,22 @@ func TestNormalizeRepoName(t *testing.T) {
 		}
 	}
 }
+
+func TestNormalizeCloneName(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"my-app", "my-app"},
+		{"my-app.git", "my-app"},   // agents paste the clone_url basename
+		{" my-app.git ", "my-app"}, // stray whitespace tolerated
+		{"", ""},                   // required-arg check stays in the handler
+	}
+
+	for _, tt := range tests {
+		got := normalizeCloneName(tt.input)
+		if got != tt.want {
+			t.Errorf("normalizeCloneName(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
