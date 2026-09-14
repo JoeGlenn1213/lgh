@@ -137,3 +137,18 @@ func TestNormalizeCloneName(t *testing.T) {
 		}
 	}
 }
+
+func TestActionDBaseURL(t *testing.T) {
+	t.Run("default", func(t *testing.T) {
+		t.Setenv("ACTIOND_URL", "")
+		if got := actiondBaseURL(); got != "http://localhost:3000" {
+			t.Errorf("got %q, want default", got)
+		}
+	})
+	t.Run("env override with trailing slash", func(t *testing.T) {
+		t.Setenv("ACTIOND_URL", "http://127.0.0.1:3999/")
+		if got := actiondBaseURL(); got != "http://127.0.0.1:3999" {
+			t.Errorf("got %q, want override without trailing slash", got)
+		}
+	})
+}

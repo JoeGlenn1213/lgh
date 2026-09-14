@@ -298,12 +298,22 @@ func addRepoToLGH(repoPath, name string, noRemote bool) error {
 	return cmd.Run()
 }
 
+// actiondBaseURL returns the ActionD API base URL. Override with the
+// ACTIOND_URL environment variable (multi-instance setups where ActionD does
+// not listen on the default loopback port); trailing slashes are trimmed.
+func actiondBaseURL() string {
+	if env := strings.TrimRight(os.Getenv("ACTIOND_URL"), "/"); env != "" {
+		return env
+	}
+	return "http://localhost:3000"
+}
+
 // waitAndShowCIResults polls ActionD for CI results after a push and displays them in the terminal.
 // This is best-effort: if ActionD is not running or the event can't be found, it silently skips.
 func waitAndShowCIResults(cwd string) {
 	// Check if ActionD is reachable
 	client := http.Client{Timeout: 1 * time.Second}
-	resp, err := client.Get("http://localhost:3000/api/actions?limit=1")
+	resp, err := client.Get(actiondBaseURL() + "/api/actions?limit=1")
 	if err != nil {
 		return // ActionD not running, skip silently
 	}
@@ -342,7 +352,7 @@ func waitAndShowCIResults(cwd string) {
 	var jobs []map[string]interface{}
 
 	for time.Now().Before(deadline) {
-		resp, err := client.Get(fmt.Sprintf("http://localhost:3000/api/actions/by-event/%s", eventID))
+		resp, err := client.Get(fmt.Sprintf("%s/api/actions/by-event/%s", actiondBaseURL(), eventID))
 		if err != nil {
 			time.Sleep(1 * time.Second)
 			continue

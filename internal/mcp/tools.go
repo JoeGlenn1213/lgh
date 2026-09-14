@@ -869,6 +869,16 @@ func normalizeRepoName(name string) string {
 	return b.String()
 }
 
+// actiondBaseURL returns the ActionD API base URL. Override with the
+// ACTIOND_URL environment variable (multi-instance setups); trailing slashes
+// are trimmed.
+func actiondBaseURL() string {
+	if env := strings.TrimRight(os.Getenv("ACTIOND_URL"), "/"); env != "" {
+		return env
+	}
+	return "http://localhost:3000"
+}
+
 // pollActionDByEventID polls ActionD's /api/actions/by-event/{event_id} endpoint
 // until all jobs reach terminal state or timeout. Returns job IDs.
 func pollActionDByEventID(eventID string, timeout time.Duration) []string {
@@ -877,7 +887,7 @@ func pollActionDByEventID(eventID string, timeout time.Duration) []string {
 	var jobIDs []string
 
 	for time.Now().Before(deadline) {
-		resp, err := client.Get(fmt.Sprintf("http://localhost:3000/api/actions/by-event/%s", eventID))
+		resp, err := client.Get(fmt.Sprintf("%s/api/actions/by-event/%s", actiondBaseURL(), eventID))
 		if err != nil {
 			time.Sleep(500 * time.Millisecond)
 			continue

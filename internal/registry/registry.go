@@ -199,7 +199,10 @@ func (r *Registry) Find(name string) (*RepoMapping, error) {
 	return nil, fmt.Errorf("repository '%s' not found", name)
 }
 
-// FindBySourcePath finds a repository mapping by source path
+// FindBySourcePath finds a repository mapping by source path.
+// Registrations store the symlink-evaluated path (cmd/lgh expandPath), while callers
+// often pass a raw path (/tmp/... vs /private/tmp/... on macOS) — so both the
+// raw absolute path and its EvalSymlinks form are compared.
 func (r *Registry) FindBySourcePath(sourcePath string) (*RepoMapping, error) {
 	mappings, err := r.load()
 	if err != nil {
@@ -210,9 +213,13 @@ func (r *Registry) FindBySourcePath(sourcePath string) (*RepoMapping, error) {
 	if err != nil {
 		return nil, err
 	}
+	evaluated := absPath
+	if ev, evErr := filepath.EvalSymlinks(absPath); evErr == nil {
+		evaluated = ev
+	}
 
 	for _, repo := range mappings.Repos {
-		if repo.SourcePath == absPath {
+		if repo.SourcePath == absPath || repo.SourcePath == evaluated {
 			return &repo, nil
 		}
 	}

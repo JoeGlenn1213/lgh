@@ -207,6 +207,14 @@ func startDaemon(cfg *config.Config) error {
 // Tries PATH → ~/.local/bin → repo binary. Validates each candidate before use.
 // Failures are logged to stderr but never block LGH startup.
 func tryStartActionD() {
+	// Opt-out for multi-instance setups: an isolated LGH (custom HOME/port)
+	// must not spawn a globally installed ActionD against the wrong
+	// environment. LGH_AUTOSTART_ACTIOND=0 disables auto-start entirely.
+	if os.Getenv("LGH_AUTOSTART_ACTIOND") == "0" {
+		fmt.Fprintln(os.Stderr, "[lgh] ActionD auto-start disabled via LGH_AUTOSTART_ACTIOND=0")
+		return
+	}
+
 	// Collect candidate paths in priority order
 	var candidates []string
 	if path, err := exec.LookPath("actiond"); err == nil {
@@ -255,6 +263,7 @@ func tryStartActionD() {
 	// Start ActionD in daemon mode
 	// #nosec G204 -- actiondPath validated above
 	cmd := exec.Command(actiondPath, "start", "-d")
+	fmt.Fprintf(os.Stderr, "[lgh] auto-starting ActionD: %s start -d\n", actiondPath)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		fmt.Fprintf(os.Stderr, "[lgh] ActionD auto-start failed: %v (%s)\n", err, string(output))
 	}

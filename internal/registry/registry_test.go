@@ -21,6 +21,7 @@
 package registry
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -299,5 +300,33 @@ func TestMappingsYAML(t *testing.T) {
 
 	if len(m.Repos) != 2 {
 		t.Errorf("len(m.Repos) = %d, want 2", len(m.Repos))
+	}
+}
+
+func TestRegistryFindBySourcePathSymlink(t *testing.T) {
+	// Add stores the symlink-evaluated source path; callers query with the
+	// raw path (macOS /tmp vs /private/tmp). Regression: registration checks
+	// used to miss and treat the repo as unregistered.
+	tmpDir := t.TempDir()
+	r := NewWithPath(filepath.Join(tmpDir, "mappings.yaml"))
+
+	real := t.TempDir()
+	resolved, err := filepath.EvalSymlinks(real)
+	if err != nil {
+		t.Skipf("eval symlinks: %v", err)
+	}
+	r.Add("linked-repo", resolved, filepath.Join(tmpDir, "bare.git"))
+
+	// Query with a path whose EvalSymlinks form equals the stored entry.
+	link := real + "-link"
+	if linkErr := os.Symlink(real, link); linkErr != nil {
+		t.Skip("symlink unsupported")
+	}
+	repo, err := r.FindBySourcePath(link)
+	if err != nil {
+		t.Fatalf("FindBySourcePath via symlink failed: %v", err)
+	}
+	if repo.Name != "linked-repo" {
+		t.Errorf("repo.Name = %q, want linked-repo", repo.Name)
 	}
 }
