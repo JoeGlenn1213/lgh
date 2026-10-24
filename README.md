@@ -4,6 +4,8 @@
   <img src="https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat&logo=go" alt="Go Version">
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
   <img src="https://img.shields.io/badge/Platform-macOS%20|%20Linux%20|%20Windows-lightgrey" alt="Platform">
+  <a href="https://github.com/JoeGlenn1213/lgh/releases"><img src="https://img.shields.io/github/v/release/JoeGlenn1213/lgh" alt="Release"></a>
+  <a href="https://github.com/JoeGlenn1213/lgh/actions/workflows/ci.yml"><img src="https://github.com/JoeGlenn1213/lgh/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://glama.ai/mcp/servers/JoeGlenn1213/lgh"><img src="https://glama.ai/mcp/servers/JoeGlenn1213/lgh/badges/score.svg" alt="MCP Server score on Glama"></a>
 </p>
 
@@ -12,6 +14,14 @@
 </p>
 
 **LGH (LocalGitHub)** is a lightweight local Git hosting service. It wraps `git http-backend` to provide GitHub-like HTTP access, running entirely on localhost - turning your local directory into a Git server.
+
+## 🌐 Ecosystem
+
+LGH is the foundation of a local-first dev-toolchain for AI agents:
+
+- [ActionD](https://github.com/JoeGlenn1213/ActionD) — local CI/CD engine that listens to LGH git events and runs plugin jobs (MCP server with 22 tools, incl. the one-call `dev_cycle_run` commit→CI loop)
+- [actiond-web](https://github.com/JoeGlenn1213/actiond-web) — web console with live dashboard, SSE log streaming, and in-browser failure diagnosis
+- [homebrew-tap](https://github.com/JoeGlenn1213/homebrew-tap) — `brew install lgh` / `brew install actiond`
 
 ## ✨ Features
 

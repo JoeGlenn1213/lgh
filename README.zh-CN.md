@@ -4,12 +4,22 @@
   <img src="https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat&logo=go" alt="Go Version">
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
   <img src="https://img.shields.io/badge/Platform-macOS%20|%20Linux%20|%20Windows-lightgrey" alt="Platform">
+  <a href="https://github.com/JoeGlenn1213/lgh/releases"><img src="https://img.shields.io/github/v/release/JoeGlenn1213/lgh" alt="Release"></a>
+  <a href="https://github.com/JoeGlenn1213/lgh/actions/workflows/ci.yml"><img src="https://github.com/JoeGlenn1213/lgh/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://glama.ai/mcp/servers/JoeGlenn1213/lgh"><img src="https://glama.ai/mcp/servers/JoeGlenn1213/lgh/badges/score.svg" alt="MCP Server score on Glama"></a>
 </p>
 
 > 🚀 Instantly turn any directory into a Git server. **Built-in MCP Server** for AI Agents, smart-ignore, and zero-config. AI-workflow ready. Powered by Go.
 
 **LGH (LocalGitHub)** 是一个轻量级、开发者友好的本地 Git 托管服务。它不仅提供类似 GitHub 的 HTTP 访问能力，更在 v1.2.0+ 中深度集成了 **MCP (Model Context Protocol)**，让 AI 助手（如 Cursor / Claude）能够直接理解和操作你的本地代码存档。
+
+## 🌐 生态
+
+LGH 是面向 AI Agent 的本地优先开发工具链的基座：
+
+- [ActionD](https://github.com/JoeGlenn1213/ActionD) —— 监听 LGH Git 事件的本地 CI/CD 引擎（MCP 22 工具，含一键 commit→CI 的 `dev_cycle_run`）
+- [actiond-web](https://github.com/JoeGlenn1213/actiond-web) —— Web 控制台：实时仪表盘、SSE 日志流、浏览器内失败诊断
+- [homebrew-tap](https://github.com/JoeGlenn1213/homebrew-tap) —— `brew install lgh` / `brew install actiond`
 
 ## ✨ 特性
 
