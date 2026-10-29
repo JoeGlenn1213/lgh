@@ -73,17 +73,10 @@ curl -sSL https://raw.githubusercontent.com/JoeGlenn1213/lgh/main/install.sh | b
 curl -sSL https://raw.githubusercontent.com/JoeGlenn1213/lgh/main/uninstall.sh | bash
 ```
 
-### Option 3: Homebrew (macOS)
+### Option 3: Homebrew (macOS / Linux)
 
 ```bash
-# Add tap
-brew tap JoeGlenn1213/tap
-
-# Install
-brew install lgh
-
-# Uninstall
-brew uninstall lgh
+brew install JoeGlenn1213/tap/lgh
 ```
 
 ### Option 4: Build from Source
@@ -104,6 +97,14 @@ sudo mv lgh /usr/local/bin/
 ```bash
 go install github.com/JoeGlenn1213/lgh/cmd/lgh@latest
 ```
+
+### Run on Startup
+
+```bash
+brew services start lgh
+```
+
+To run LGH alongside [ActionD](https://github.com/JoeGlenn1213/ActionD), see ActionD's [`scripts/autostart.sh`](https://github.com/JoeGlenn1213/ActionD/blob/main/scripts/autostart.sh).
 
 ## 🚀 Quick Start
 

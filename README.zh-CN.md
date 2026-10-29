@@ -71,17 +71,10 @@ curl -sSL https://raw.githubusercontent.com/JoeGlenn1213/lgh/main/install.sh | b
 curl -sSL https://raw.githubusercontent.com/JoeGlenn1213/lgh/main/uninstall.sh | bash
 ```
 
-### 方式 3: Homebrew (macOS)
+### 方式 3: Homebrew (macOS / Linux)
 
 ```bash
-# 添加 tap
-brew tap JoeGlenn1213/tap
-
-# 安装
-brew install lgh
-
-# 卸载
-brew uninstall lgh
+brew install JoeGlenn1213/tap/lgh
 ```
 
 ### 方式 4: 从源码编译
@@ -102,6 +95,14 @@ sudo mv lgh /usr/local/bin/
 ```bash
 go install github.com/JoeGlenn1213/lgh/cmd/lgh@latest
 ```
+
+### 开机启动
+
+```bash
+brew services start lgh
+```
+
+如需与 [ActionD](https://github.com/JoeGlenn1213/ActionD) 一起启动，请参阅 ActionD 的 [`scripts/autostart.sh`](https://github.com/JoeGlenn1213/ActionD/blob/main/scripts/autostart.sh)。
 
 ## 🚀 快速开始
 
