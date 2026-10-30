@@ -114,7 +114,7 @@ lgh init
 brew services start lgh
 ```
 
-如需与 [ActionD](https://github.com/JoeGlenn1213/ActionD) 一起启动，请参阅 ActionD 的 [`scripts/autostart.sh`](https://github.com/JoeGlenn1213/ActionD/blob/main/scripts/autostart.sh)。
+与 [ActionD](https://github.com/JoeGlenn1213/ActionD) 一起开机启动的辅助脚本将随 ActionD 的下一版发布。在此之前，请在执行 `lgh init` 之后，按 ActionD 的 [README](https://github.com/JoeGlenn1213/ActionD/blob/main/README_CN.md) 启动 ActionD。
 
 ### 2. 启动服务器
 

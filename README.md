@@ -110,13 +110,13 @@ This creates the necessary directories and config files in `~/.localgithub/`.
 
 ### Run on Startup
 
-Run this only after `lgh init`. The service runs `lgh serve` and stops until that command has created `~/.localgithub/`.
+Run this only after `lgh init`. The service runs `lgh serve` and stops until `lgh init` has created `~/.localgithub/`.
 
 ```bash
 brew services start lgh
 ```
 
-To run LGH alongside [ActionD](https://github.com/JoeGlenn1213/ActionD), see ActionD's [`scripts/autostart.sh`](https://github.com/JoeGlenn1213/ActionD/blob/main/scripts/autostart.sh).
+A helper that starts LGH and [ActionD](https://github.com/JoeGlenn1213/ActionD) together ships with ActionD's next release. Until then, start ActionD from its [README](https://github.com/JoeGlenn1213/ActionD/blob/main/README.md) after `lgh init`.
 
 ### 2. Start the Server
 
