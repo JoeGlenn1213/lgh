@@ -96,14 +96,6 @@ sudo mv lgh /usr/local/bin/
 go install github.com/JoeGlenn1213/lgh/cmd/lgh@latest
 ```
 
-### 开机启动
-
-```bash
-brew services start lgh
-```
-
-如需与 [ActionD](https://github.com/JoeGlenn1213/ActionD) 一起启动，请参阅 ActionD 的 [`scripts/autostart.sh`](https://github.com/JoeGlenn1213/ActionD/blob/main/scripts/autostart.sh)。
-
 ## 🚀 快速开始
 
 ### 1. 初始化 LGH 环境
@@ -113,6 +105,16 @@ lgh init
 ```
 
 这将在 `~/.localgithub/` 创建必要的目录和配置文件。
+
+### 开机启动
+
+请仅在执行 `lgh init` 之后配置。该服务实际运行 `lgh serve`，在 `lgh init` 创建 `~/.localgithub/` 之前会退出。
+
+```bash
+brew services start lgh
+```
+
+如需与 [ActionD](https://github.com/JoeGlenn1213/ActionD) 一起启动，请参阅 ActionD 的 [`scripts/autostart.sh`](https://github.com/JoeGlenn1213/ActionD/blob/main/scripts/autostart.sh)。
 
 ### 2. 启动服务器
 

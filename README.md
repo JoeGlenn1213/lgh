@@ -98,14 +98,6 @@ sudo mv lgh /usr/local/bin/
 go install github.com/JoeGlenn1213/lgh/cmd/lgh@latest
 ```
 
-### Run on Startup
-
-```bash
-brew services start lgh
-```
-
-To run LGH alongside [ActionD](https://github.com/JoeGlenn1213/ActionD), see ActionD's [`scripts/autostart.sh`](https://github.com/JoeGlenn1213/ActionD/blob/main/scripts/autostart.sh).
-
 ## 🚀 Quick Start
 
 ### 1. Initialize LGH Environment
@@ -115,6 +107,16 @@ lgh init
 ```
 
 This creates the necessary directories and config files in `~/.localgithub/`.
+
+### Run on Startup
+
+Run this only after `lgh init`. The service runs `lgh serve` and stops until that command has created `~/.localgithub/`.
+
+```bash
+brew services start lgh
+```
+
+To run LGH alongside [ActionD](https://github.com/JoeGlenn1213/ActionD), see ActionD's [`scripts/autostart.sh`](https://github.com/JoeGlenn1213/ActionD/blob/main/scripts/autostart.sh).
 
 ### 2. Start the Server
 
