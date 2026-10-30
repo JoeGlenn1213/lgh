@@ -73,17 +73,10 @@ curl -sSL https://raw.githubusercontent.com/JoeGlenn1213/lgh/main/install.sh | b
 curl -sSL https://raw.githubusercontent.com/JoeGlenn1213/lgh/main/uninstall.sh | bash
 ```
 
-### Option 3: Homebrew (macOS)
+### Option 3: Homebrew (macOS / Linux)
 
 ```bash
-# Add tap
-brew tap JoeGlenn1213/tap
-
-# Install
-brew install lgh
-
-# Uninstall
-brew uninstall lgh
+brew install JoeGlenn1213/tap/lgh
 ```
 
 ### Option 4: Build from Source
@@ -114,6 +107,16 @@ lgh init
 ```
 
 This creates the necessary directories and config files in `~/.localgithub/`.
+
+### Run on Startup
+
+Run this only after `lgh init`. The service runs `lgh serve` and stops until `lgh init` has created `~/.localgithub/`.
+
+```bash
+brew services start lgh
+```
+
+A helper that starts LGH and [ActionD](https://github.com/JoeGlenn1213/ActionD) together ships with ActionD's next release. Until then, start ActionD from its [README](https://github.com/JoeGlenn1213/ActionD/blob/main/README.md) after `lgh init`.
 
 ### 2. Start the Server
 

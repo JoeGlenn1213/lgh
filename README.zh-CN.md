@@ -71,17 +71,10 @@ curl -sSL https://raw.githubusercontent.com/JoeGlenn1213/lgh/main/install.sh | b
 curl -sSL https://raw.githubusercontent.com/JoeGlenn1213/lgh/main/uninstall.sh | bash
 ```
 
-### 方式 3: Homebrew (macOS)
+### 方式 3: Homebrew (macOS / Linux)
 
 ```bash
-# 添加 tap
-brew tap JoeGlenn1213/tap
-
-# 安装
-brew install lgh
-
-# 卸载
-brew uninstall lgh
+brew install JoeGlenn1213/tap/lgh
 ```
 
 ### 方式 4: 从源码编译
@@ -112,6 +105,16 @@ lgh init
 ```
 
 这将在 `~/.localgithub/` 创建必要的目录和配置文件。
+
+### 开机启动
+
+请仅在执行 `lgh init` 之后配置。该服务实际运行 `lgh serve`，在 `lgh init` 创建 `~/.localgithub/` 之前会退出。
+
+```bash
+brew services start lgh
+```
+
+与 [ActionD](https://github.com/JoeGlenn1213/ActionD) 一起开机启动的辅助脚本将随 ActionD 的下一版发布。在此之前，请在执行 `lgh init` 之后，按 ActionD 的 [README](https://github.com/JoeGlenn1213/ActionD/blob/main/README_CN.md) 启动 ActionD。
 
 ### 2. 启动服务器
 
